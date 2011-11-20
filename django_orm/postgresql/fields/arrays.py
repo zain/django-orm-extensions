@@ -3,6 +3,7 @@
 from django.db import models
 from django.utils.encoding import force_unicode
 
+
 class ArrayField(models.Field):
     __metaclass__ = models.SubfieldBase
 

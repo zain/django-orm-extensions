@@ -2,7 +2,7 @@
 
 from django.db import models
 from django.utils.encoding import force_unicode
-from django_orm.postgresql.constants import geometric_lookups
+from django_orm.postgresql.constants import QUERY_TERMS
 
 """
 Posible aggregate list:
@@ -59,7 +59,7 @@ class CircleField(models.Field):
         super(CircleField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -88,7 +88,7 @@ class LineField(models.Field):
 
     def get_prep_lookup(self, lookup_type, value):
         #fix this with correct lookup types not all
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -116,7 +116,7 @@ class LsegField(models.Field):
         super(LsegField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -143,7 +143,7 @@ class BoxField(models.Field):
         super(BoxField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -171,7 +171,7 @@ class PathField(models.Field):
         super(PathField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
     
@@ -199,7 +199,7 @@ class PolygonField(models.Field):
         super(PolygonField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in geometric_lookups:
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 

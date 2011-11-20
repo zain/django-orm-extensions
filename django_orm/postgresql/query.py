@@ -73,21 +73,17 @@ lookups = {
         field, [param]),
 }
 
-geometric_types = ('box', 'point', 'line', 'lseg', 'path', 'polygon', 'circle')
+geometric_types = dict((x, None) for x in \
+    ('box', 'point', 'line', 'lseg', 'path', 'polygon', 'circle'))
 
 class PgWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
         lvalue, lookup_type, value_annot, params_or_value = child
-        kwargs = {'connection': connection} if VERSION[:2] >= (1, 3) else {}
-
-        if hasattr(lvalue, 'process'):
-            try:
-                lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
-            except EmptyShortCircuit:
-                raise EmptyResultSet
-        else:
-            params = Field().get_db_prep_lookup(lookup_type, params_or_value,
-                prepared=True, **kwargs)
+        
+        try:
+            lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
+        except EmptyShortCircuit:
+            raise EmptyResultSet
 
         model_alias, field_name, db_type = lvalue
         field_sql = self.sql_for_columns(lvalue, qn, connection)
@@ -95,7 +91,7 @@ class PgWhereNode(WhereNode):
         if db_type in geometric_types and lookup_type in lookups:
             return lookups[lookup_type](field_sql, params)
 
-        elif '[]' in db_type:
+        if db_type.endswith('[]'):
             params, is_list = params
             if lookup_type == 'contains':   
                 a = lookups[lookup_type](field_sql, params, is_list)
@@ -105,7 +101,7 @@ class PgWhereNode(WhereNode):
             else:
                 return super(PgWhereNode, self).make_atom(child, qn, connection)
 
-        elif 'varchar' in db_type:
+        elif db_type.startswith('varchar'):
             if lookup_type in ('unaccent', 'iunaccent'):
                 return lookups[lookup_type](field_sql, params)
             else:

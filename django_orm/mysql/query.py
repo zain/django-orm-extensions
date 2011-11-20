@@ -18,29 +18,25 @@ from django_orm.mysql.constants import QUERY_TERMS
 class MyWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
         lvalue, lookup_type, value_annot, param = child
-        kwargs = {'connection': connection} if VERSION[:2] >= (1, 3) else {}
+        
+        try:
+            lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
+        except EmptyShortCircuit:
+            raise EmptyResultSet
 
-        if not lvalue.field:
-            return super(MyWhereNode, self).make_atom(child, qn, connection)
+        model_alias, field_name, db_type = lvalue
+        field_sql = self.sql_for_columns(lvalue, qn, connection)
 
-        if not hasattr(lvalue.field, 'db_type'):
-            return super(MyWhereNode, self).make_atom(child, qn, connection)
-
-        db_type = lvalue.field.db_type(**kwargs)
-        if lvalue and lvalue.field and hasattr(lvalue.field, 'db_type') \
-                and "varchar" in db_type:
-
+        if db_type.startswith('varchar'):
             try:
                 lvalue, params = lvalue.process(lookup_type, param, connection)
             except EmptyShortCircuit:
                 raise EmptyResultSet
             
-            field = self.sql_for_columns(lvalue, qn, connection)
-            if lookup_type in ['unaccent', 'iunaccent']:
-                return ("%s LIKE _utf8 %%s COLLATE utf8_unicode_ci" % field, ["%" + param + "%"])
+            if lookup_type in ('unaccent', 'iunaccent'):
+                return ("%s LIKE _utf8 %%s COLLATE utf8_unicode_ci" % field_sql, [params])
             else:
                 return super(MyWhereNode, self).make_atom(child, qn, connection)
-
         return super(MyWhereNode, self).make_atom(child, qn, connection)
 
 
