@@ -31,7 +31,7 @@ class PointField(models.Field):
         super(PointField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in ('same_as', 'distance'):
+        if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
@@ -87,7 +87,6 @@ class LineField(models.Field):
         super(LineField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        #fix this with correct lookup types not all
         if lookup_type in QUERY_TERMS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
@@ -132,6 +131,7 @@ class LsegField(models.Field):
 
     def to_python(self, value):
         return value
+
 
 class BoxField(models.Field):
     __metaclass__ = models.SubfieldBase

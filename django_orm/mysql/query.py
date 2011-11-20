@@ -17,7 +17,7 @@ from django_orm.mysql.constants import QUERY_TERMS
 
 class MyWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
-        lvalue, lookup_type, value_annot, param = child
+        lvalue, lookup_type, value_annot, params_or_value = child
         
         try:
             lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
@@ -28,11 +28,6 @@ class MyWhereNode(WhereNode):
         field_sql = self.sql_for_columns(lvalue, qn, connection)
 
         if db_type.startswith('varchar'):
-            try:
-                lvalue, params = lvalue.process(lookup_type, param, connection)
-            except EmptyShortCircuit:
-                raise EmptyResultSet
-            
             if lookup_type in ('unaccent', 'iunaccent'):
                 return ("%s LIKE _utf8 %%s COLLATE utf8_unicode_ci" % field_sql, [params])
             else:

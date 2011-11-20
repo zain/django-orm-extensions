@@ -91,3 +91,7 @@ QUERY_TERMS.update(GEOMETRIC_LOOKUPS)
 QUERY_TERMS.update(FTS_LOCKUPS)
 QUERY_TERMS.update(VARCHAR_LOOKUPS)
 QUERY_TERMS.update(INTERVAL_LOOKUPS)
+
+GEOMETRIC_TYPES = dict((x, None) for x in \
+    ('box', 'point', 'line', 'lseg', 'path', 'polygon', 'circle'))
+

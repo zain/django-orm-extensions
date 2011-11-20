@@ -14,10 +14,11 @@ try:
 except ImportError:
     from django.db.models.query_utils import QueryWrapper # django >= 1.4
 
-from django_orm.postgresql.constants import QUERY_TERMS
+from django_orm.postgresql.constants import QUERY_TERMS, FTS_LOCKUPS
+from django_orm.postgresql.constants import GEOMETRIC_LOOKUPS, VARCHAR_LOOKUPS
+from django_orm.postgresql.constants import GEOMETRIC_TYPES
 from django_orm.postgresql.hstore.query import select_query, update_query
 from django_orm.cache.query import CachedQuerySet
-
 
 lookups = {
     'is_closed': lambda field, param: ('isclosed(%s) = %%s' % field, [param]),
@@ -73,9 +74,6 @@ lookups = {
         field, [param]),
 }
 
-geometric_types = dict((x, None) for x in \
-    ('box', 'point', 'line', 'lseg', 'path', 'polygon', 'circle'))
-
 class PgWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
         lvalue, lookup_type, value_annot, params_or_value = child
@@ -88,24 +86,18 @@ class PgWhereNode(WhereNode):
         model_alias, field_name, db_type = lvalue
         field_sql = self.sql_for_columns(lvalue, qn, connection)
         
-        if db_type in geometric_types and lookup_type in lookups:
+        if db_type in GEOMETRIC_TYPES and lookup_type in lookups:
             return lookups[lookup_type](field_sql, params)
 
-        if db_type.endswith('[]'):
+        elif db_type.endswith('[]'):
             params, is_list = params
             if lookup_type == 'contains':   
-                a = lookups[lookup_type](field_sql, params, is_list)
-                return a
+                return lookups[lookup_type](field_sql, params, is_list)
             elif lookup_type in lookups:
                 return lookups[lookup_type](field_sql, params)
-            else:
-                return super(PgWhereNode, self).make_atom(child, qn, connection)
 
-        elif db_type.startswith('varchar'):
-            if lookup_type in ('unaccent', 'iunaccent'):
-                return lookups[lookup_type](field_sql, params)
-            else:
-                return super(PgWhereNode, self).make_atom(child, qn, connection)
+        elif db_type.startswith('varchar') and lookup_type in VARCHAR_LOOKUPS:
+            return lookups[lookup_type](field_sql, params)
 
         elif db_type == 'tsvector':
             if isinstance(params, basestring):

@@ -17,29 +17,19 @@ from django_orm.sqlite3.constants import QUERY_TERMS
 
 class SqliteWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
-        lvalue, lookup_type, value_annot, param = child
-        kwargs = {'connection': connection} if VERSION[:2] >= (1, 3) else {}
+        lvalue, lookup_type, value_annot, params_or_value = child
+        try:
+            lvalue, params = lvalue.process(lookup_type, params_or_value, connection)
+        except EmptyShortCircuit:
+            raise EmptyResultSet
 
-        if not lvalue.field:
-            return super(SqliteWhereNode, self).make_atom(child, qn, connection)
+        model_alias, field_name, db_type = lvalue
+        field_sql = self.sql_for_columns(lvalue, qn, connection)
 
-        if not hasattr(lvalue.field, 'db_type'):
-            return super(SqliteWhereNode, self).make_atom(child, qn, connection)
+        if db_type.startswith('varchar') or db_type == 'text':
+            if lookup_type in ('unaccent', 'iunaccent'):
+                return ("unaccent(%s) LIKE unaccent(%%s) ESCAPE '\\'" % field_sql, [params])
 
-        db_type = lvalue.field.db_type(**kwargs)
-        if lvalue and lvalue.field and hasattr(lvalue.field, 'db_type') \
-                and ("varchar" in db_type or "text" in db_type):
-
-            try:
-                lvalue, params = lvalue.process(lookup_type, param, connection)
-            except EmptyShortCircuit:
-                raise EmptyResultSet
-            
-            field = self.sql_for_columns(lvalue, qn, connection)
-            if lookup_type in ['unaccent', 'iunaccent']:
-                return ("unaccent(%s) LIKE unaccent(%%s) ESCAPE '\\'" % field, ["%" + param + "%"])
-            else:
-                return super(SqliteWhereNode, self).make_atom(child, qn, connection)
         return super(SqliteWhereNode, self).make_atom(child, qn, connection)
 
 
