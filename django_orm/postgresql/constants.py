@@ -21,11 +21,16 @@ A lot of agregates are used for querys.
 
 geometric_lookups = (
     # with 2 arguments
-    'distance',
-    'center',
-    'num_points',
+    'distance', #  field <-> field = X
 
     #with one argument
+    'numpoints', # # "field" = X
+    'numpoints_gt',
+    'numpoints_gte',
+    'numpoints_lt',
+    'numpoints_lte',
+
+    'center',   # center("field") = X
     'is_closed',            # isclosed(path)
     'is_open',              # isopen(path)
     'length'                # length(object)
@@ -53,7 +58,6 @@ geometric_lookups = (
     'diameter_lt',
     'diameter_gte',
     'diameter_lte',
-    'center',               # center(object)
     'area',                 # area(object)
     'area_gt',
     'area_lt',
@@ -75,8 +79,9 @@ geometric_lookups = (
     'is_perpendicular',
     'is_parallel',
     'contained_in_or_on',
-    'contains',
     'same_as',
+    'contains',
+    'center',
 )
 
 GEOMETRIC_LOOKUPS = dict((x, None) for x in geometric_lookups)

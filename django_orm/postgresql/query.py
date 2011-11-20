@@ -71,6 +71,13 @@ lookups = {
     'iunaccent': lambda field, param: ('lower(unaccent(%s)) LIKE lower(unaccent(%%s))' %\
         field, [param]),
 
+    'center': lambda field, param: ('@@ %s ~= %%s' % field, [param]),
+    'numpoints': lambda field, param: ('# %s = %%s' % field, [param]),
+    'numpoints_gt': lambda field, param: ('# %s > %%s' % field, [param]),
+    'numpoints_lt': lambda field, param: ('# %s < %%s' % field, [param]),
+    'numpoints_gte': lambda field, param: ('# %s >= %%s' % field, [param]),
+    'numpoints_lte': lambda field, param: ('# %s <= %%s' % field, [param]),
+
     'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
         if is_list else ('%%s = ANY(%s)' % field, [param]),
     'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),

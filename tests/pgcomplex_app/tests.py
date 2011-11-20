@@ -314,3 +314,26 @@ class GeometricFieldsTest(TestCase):
 
         qs = GeomModel.objects.filter(cr__distance=(Circle(5,0,1), 3))
         self.assertEqual(qs.count(), 1)
+
+    def test_num_points(self):
+        GeomModel.objects.create(
+            ph = Path((1,2),(2,3),(3,4))
+        )
+        GeomModel.objects.create(
+            ph = Path((1,2),(2,3),(3,4),(7,1))
+        )
+
+        qs = GeomModel.objects.filter(ph__numpoints=3)
+        self.assertEqual(qs.count(), 4)
+
+        qs = GeomModel.objects.filter(ph__numpoints_gt=3)
+        self.assertEqual(qs.count(), 1)
+
+        qs = GeomModel.objects.filter(ph__numpoints_lte=4)
+        self.assertEqual(qs.count(), 5)
+
+    def test_center(self):
+        qs = GeomModel.objects.filter(
+            bx__center=Point(1,1)
+        )
+        self.assertEqual(qs.count(), 1)
