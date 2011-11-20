@@ -52,7 +52,7 @@ class OrmCacheTest(TestCase):
     
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_num_querys_queryset_byid(self):
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(4):
             list(TestModel.objects.cache().all().byid(False))
             list(TestModel.objects.cache().all().byid(False))
             list(TestModel.objects.cache().all().byid(False))
@@ -62,7 +62,7 @@ class OrmCacheTest(TestCase):
         with self.assertNumQueries(2):
             list(TestModel.objects.cache().all().byid(True))
             list(TestModel.objects.cache().all().byid(True))
-
+            list(TestModel.objects.cache().all().byid(True))
 
     @unittest.skipIf(connection.vendor == 'postgresql', "Only for mysql and sqlite")
     def test_num_querys_queryset_byid_generic(self):
