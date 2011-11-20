@@ -15,6 +15,9 @@ class ByteaField(models.Field):
     def get_prep_lookup(self, lookup_type, value):
         raise TypeError("This field does not allow any kind of search.")
 
+    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
+        raise TypeError("This field does not allow any kind of search.")
+
     def db_type(self, connection):
         return 'bytea'
 
@@ -28,8 +31,8 @@ class ByteaField(models.Field):
             value = value
         else:
             raise ValueError("only str, unicode and bytea permited")
-
         return value
+
 
     def get_prep_value(self, value):
         return value
