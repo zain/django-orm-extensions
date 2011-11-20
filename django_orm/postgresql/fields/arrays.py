@@ -3,6 +3,8 @@
 from django.db import models
 from django.utils.encoding import force_unicode
 
+from django_orm.postgresql.constants import ARRAY_LOOKUPS
+
 
 class ArrayField(models.Field):
     __metaclass__ = models.SubfieldBase
@@ -24,9 +26,7 @@ class ArrayField(models.Field):
         if hasattr(value, '_prepare'):
             return value._prepare()
 
-        if lookup_type in ('indexexact', 'distinct', 'slice',\
-                    'contains', 'containedby', 'overlap', 'exact', \
-                    'gt','lt','gte', 'lte'):
+        if lookup_type in ARRAY_LOOKUPS:
             return self.get_prep_value(value)
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 

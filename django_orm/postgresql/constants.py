@@ -79,19 +79,18 @@ geometric_lookups = (
     'same_as',
 )
 
-QUERY_TERMS.update(dict([(x, None) for x in \
-    ('indexexact', 'distinct', 'slice', 'containedby', 'unaccent', 'iunaccent', 'query')]))
-
 GEOMETRIC_LOOKUPS = dict((x, None) for x in geometric_lookups)
 FTS_LOCKUPS = {'query': None}
 VARCHAR_LOOKUPS = dict((x, None) for x in ('unaccent', 'iunaccent'))
 INTERVAL_LOOKUPS = dict((x, None) for x in  ('distinct', 'exact', 'gt','lt','gte', 'lte'))
+ARRAY_LOOKUPS = dict((x, None) for x in ('indexexact', 'distinct', 'slice', 'contains', 
+                                'containedby', 'overlap', 'exact', 'gt','lt','gte', 'lte'))
 
 QUERY_TERMS.update(GEOMETRIC_LOOKUPS)
 QUERY_TERMS.update(FTS_LOCKUPS)
 QUERY_TERMS.update(VARCHAR_LOOKUPS)
 QUERY_TERMS.update(INTERVAL_LOOKUPS)
+QUERY_TERMS.update(ARRAY_LOOKUPS)
 
 GEOMETRIC_TYPES = dict((x, None) for x in \
     ('box', 'point', 'line', 'lseg', 'path', 'polygon', 'circle'))
-

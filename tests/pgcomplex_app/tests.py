@@ -306,5 +306,4 @@ class GeometricFieldsTest(TestCase):
             ph__is_open=False
         )
         self.assertEqual(qs.count(), 2)
-        print qs.query
 

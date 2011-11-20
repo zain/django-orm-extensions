@@ -29,7 +29,6 @@ class HStoreDescriptor(models.fields.subclassing.Creator):
 
 
 class HStoreField(models.Field):
-
     _attribute_class = HStoreDictionary
     _descriptor_class = HStoreDescriptor
 
@@ -42,7 +41,6 @@ class HStoreField(models.Field):
 
 
 class DictionaryField(HStoreField):
-
     description = _("A python dictionary in a postgresql hstore field.")
 
     def formfield(self, **params):
@@ -59,7 +57,6 @@ class DictionaryField(HStoreField):
         return value
 
 class ReferencesField(HStoreField):
-
     description = _("A python dictionary of references to model instances in an hstore field.")
 
     def formfield(self, **params):
