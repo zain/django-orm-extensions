@@ -66,12 +66,14 @@ lookups = {
     'same_as': lambda field, param: ('%s ~= %%s' % field, [param]),
     'indexexact': lambda field, param: ('%s[%s] = %%s' % (field, param[0]+1), [param[1]]),
     'distinct': lambda field, param: ('%s <> %%s' % field, [param]),
-    'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
-        if is_list else ('%%s = ANY(%s)' % field, [param]),
     'containedby': lambda field, param: ('%s <@ %%s' % field, [param]),
     'unaccent': lambda field, param: ('unaccent(%s) LIKE unaccent(%%s)' % field, [param]),
     'iunaccent': lambda field, param: ('lower(unaccent(%s)) LIKE lower(unaccent(%%s))' %\
         field, [param]),
+
+    'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
+        if is_list else ('%%s = ANY(%s)' % field, [param]),
+    'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),
 }
 
 class PgWhereNode(WhereNode):

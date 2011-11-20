@@ -306,4 +306,11 @@ class GeometricFieldsTest(TestCase):
             ph__is_open=False
         )
         self.assertEqual(qs.count(), 2)
+    
+    def test_distance(self):
+        GeomModel.objects.create(
+            cr = Circle(0,0,1),
+        )
 
+        qs = GeomModel.objects.filter(cr__distance=(Circle(5,0,1), 3))
+        self.assertEqual(qs.count(), 1)
