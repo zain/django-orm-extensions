@@ -61,18 +61,18 @@ To search, use the `search` method of the manager. The current version, the meth
 
     >>> Page.objects.search("documentation & about")
     [<Page: Page: Home page>]
-    >>> Page.objects.search("about | documentation | django | home")
+    >>> Page.objects.search("about | documentation | django | home", raw=True)
     [<Page: Page: Home page>, <Page: Page: About>, <Page: Page: Navigation>]
 
 You can also use the lookup query on the index field for more advanced searches:
 
 .. code-block:: python
 
-    >>> Page.objects.filter(search_index__query='Ruby | python')
+    >>> Page.objects.filter(search_index__query_raw='Ruby | python')
     [<Page: Page object>, <Page: Page object>]
-    >>> Page.objects.filter(search_index__query='Ruby | python', name__iunaccent='Ruby')
+    >>> Page.objects.filter(search_index__query_raw='Ruby | python', name__iunaccent='Ruby')
     [<Page: Page object>]
-    >>> Page.objects.filter(search_index__query=('Ruby | python', 'pg_catalog.spanish'))
+    >>> Page.objects.filter(search_index__query_raw=('Ruby | python', 'pg_catalog.spanish'))
     [<Page: Page object>, <Page: Page object>]
 
 
@@ -93,6 +93,10 @@ This generates these SQL statements:
     FROM "page" 
     WHERE "page"."search_index" @@ to_tsquery('pg_catalog.spanish', unaccent('Ruby | python')) LIMIT 21;
 
+
+FTS extension by default uses plainto_tsquery instead of to_tosquery, for this reason the use of raw parameter. 
+There are 2 lookups, ``query`` and ``query_raw``: the second is used to do research with tsquery built by us and 
+the first one uses the function ``plainto_tsquery``.
 
 
 General notes:
