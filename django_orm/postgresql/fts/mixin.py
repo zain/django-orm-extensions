@@ -68,11 +68,12 @@ class SearchManagerMixIn(object):
         cursor.execute("COMMIT;")
         cursor.close()
 
-    def search(self, query, rank_field=None, rank_normalization=32, config=None):
+    def search(self, query, rank_field=None, rank_normalization=32, config=None, raw=False):
         if not config:
             config = self.config
         
-        ts_query = "to_tsquery('%s', unaccent('%s'))" % (config, force_unicode(query).replace("'","''"))
+        function = "plainto_tsquery" if not raw else "to_tsquery"
+        ts_query = "%s('%s', unaccent('%s'))" % (function, config, force_unicode(query).replace("'","''"))
         where = """ "%s" @@ %s""" % (self.vector_field, ts_query)
         select_dict, order = {}, []
 

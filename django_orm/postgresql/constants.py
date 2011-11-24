@@ -85,7 +85,7 @@ geometric_lookups = (
 )
 
 GEOMETRIC_LOOKUPS = dict((x, None) for x in geometric_lookups)
-FTS_LOCKUPS = {'query': None}
+FTS_LOCKUPS = {'query': None, 'query_raw':None}
 VARCHAR_LOOKUPS = dict((x, None) for x in ('unaccent', 'iunaccent'))
 INTERVAL_LOOKUPS = dict((x, None) for x in  ('distinct', 'exact', 'gt','lt','gte', 'lte'))
 ARRAY_LOOKUPS = dict((x, None) for x in ('indexexact', 'distinct', 'slice', 'contains', 

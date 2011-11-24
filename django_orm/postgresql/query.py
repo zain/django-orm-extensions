@@ -117,8 +117,12 @@ class PgWhereNode(WhereNode):
                 raise TypeError('invalid params')
             
             if lookup_type == 'query':
+                return ("%s @@ plainto_tsquery('%s', unaccent('%s'))" % \
+                    (field_sql, config, force_unicode(query).replace("'","''")), [])
+            elif lookup_type == 'query_raw':
                 return ("%s @@ to_tsquery('%s', unaccent('%s'))" % \
                     (field_sql, config, force_unicode(query).replace("'","''")), [])
+
             else:
                 raise TypeError('invalid lookup type')
 

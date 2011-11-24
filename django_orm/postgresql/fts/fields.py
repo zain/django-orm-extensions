@@ -21,8 +21,9 @@ class VectorField(models.Field):
         if hasattr(value, '_prepare'):
             return value._prepare()
 
-        if lookup_type == 'query':
+        if lookup_type in ('query', 'query_raw'):
             return self.get_prep_value(value)
+
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):

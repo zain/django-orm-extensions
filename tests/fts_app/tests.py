@@ -23,17 +23,17 @@ class TestFts(TestCase):
 
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_search_and(self):
-        qs1 = Person.objects.search(query="programmer")
-        qs2 = Person.objects.search(query="Andrei")
+        qs1 = Person.objects.search(query="programmer", raw=True)
+        qs2 = Person.objects.search(query="Andrei", raw=True)
 
         self.assertEqual(qs1.count(), 1)
         self.assertEqual(qs2.count(), 1)
 
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_search_and_2(self):
-        qs1 = Person.objects.search(query="Andrei & programmer")
-        qs2 = Person.objects.search(query="Pepa & housewife")
-        qs3 = Person.objects.search(query="Pepa & programmer")
+        qs1 = Person.objects.search(query="Andrei & programmer", raw=True)
+        qs2 = Person.objects.search(query="Pepa & housewife", raw=True)
+        qs3 = Person.objects.search(query="Pepa & programmer", raw=True)
 
         self.assertEqual(qs1.count(), 1)
         self.assertEqual(qs2.count(), 1)
@@ -41,10 +41,10 @@ class TestFts(TestCase):
 
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_search_or(self):
-        qs1 = Person.objects.search(query="Andrei | Pepa")
-        qs2 = Person.objects.search(query="Andrei | Pepo")
-        qs3 = Person.objects.search(query="Pèpâ | Andrei")
-        qs4 = Person.objects.search(query="Pepo | Francisco")
+        qs1 = Person.objects.search(query="Andrei | Pepa", raw=True)
+        qs2 = Person.objects.search(query="Andrei | Pepo", raw=True)
+        qs3 = Person.objects.search(query="Pèpâ | Andrei", raw=True)
+        qs4 = Person.objects.search(query="Pepo | Francisco", raw=True)
 
         self.assertEqual(qs1.count(), 2)
         self.assertEqual(qs2.count(), 1)
@@ -56,5 +56,15 @@ class TestFts(TestCase):
         self.p1.name = 'Francisco'
         self.p1.save()
 
-        qs = Person.objects.search(query="Pepo | Francisco")
+        qs = Person.objects.search(query="Pepo | Francisco", raw=True)
+        self.assertEqual(qs.count(), 1)
+
+    @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
+    def test_search_query_lookup(self):
+        qs = Person.objects.filter(search_index__query="Andrei programmer")
+        self.assertEqual(qs.count(), 1)
+
+    @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
+    def test_search_query_raw_lookup(self):
+        qs = Person.objects.filter(search_index__query_raw="Andrei & programmer")
         self.assertEqual(qs.count(), 1)
