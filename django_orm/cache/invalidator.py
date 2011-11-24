@@ -7,8 +7,9 @@ import logging; log = logging.getLogger('orm.cache')
 cache = get_cache()
 
 def invalidate_object(instance, **kwargs):
-    log.info("Invalidating: %s(%s)", instance.__class__.__name__,
-        instance.id)
+    if not hasattr(instance, 'cache_key'):
+        return
+
     cache.delete(instance.cache_key)
     if hasattr(cache, 'keys'):
         log.info("Searching querysets with this model...")
