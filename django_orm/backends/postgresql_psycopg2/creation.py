@@ -16,11 +16,6 @@ log = logging.getLogger(__name__)
 class DatabaseCreation(BaseDatabaseCreation):
     def install_hstore_contrib(self):
         # point to test database
-        #self.connection.close()
-        #test_database_name = self._get_test_db_name()
-        #self.connection.settings_dict["NAME"] = test_database_name
-
-        # Test to see if HSTORE type was already installed
         cursor = self.connection.cursor()
         cursor.execute("SELECT 1 FROM pg_type WHERE typname='hstore';")
         if cursor.fetchone():
