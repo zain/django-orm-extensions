@@ -80,7 +80,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection = None
 
     def _register(self):
-        # bypass future registrations
         self._register = lambda: None
         self.creation.install_hstore_contrib()
         register_hstore(self.connection, globally=True, unicode=True)
