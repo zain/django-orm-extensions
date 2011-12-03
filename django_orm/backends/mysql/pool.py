@@ -3,11 +3,8 @@
 from django.conf import settings
 from django_orm.pool import QueuePool, PersistentPool
 from django_orm import POOLTYPE_PERSISTENT, POOLTYPE_QUEUE
-import psycopg2
 
 pool = None
-
-
 
 class PoolMixIn(object):
     pool_enabled = False
@@ -19,34 +16,30 @@ class PoolMixIn(object):
         self.pool_enabled = options.pop('POOL_ENABLED', True)
 
     def _try_connected(self):
-        """
-        Try if connection object is connected
-        to a database.
-
-        :param psycopg.connection connection: db connection.
-        :returns: True or False
-        :rtype: bool
-        """
-        try:
-            self.connection.cursor().execute("SELECT 1;")
-            return True
-        except (psycopg2.OperationalError, psycopg2.InterfaceError):
-            return False
+        if self.connection is not None:
+            try:
+                self.connection.ping()
+                return True
+            except DatabaseError:
+                self.connection.close()
+                self.connection = None
+        return False
 
     def close(self):
         global pool
         if self.connection is None:
             return
-        
+
         if not self.pool_enabled:
             self.connection.close()
             self.connection = None
             return
 
-        if not self.connection.closed:
+        if not self.connection.ping():
             pool.putconn(self.connection)
 
         self.connection = None
+
 
     def _cursor(self):
         """
@@ -58,14 +51,11 @@ class PoolMixIn(object):
             poolclass = PersistentPool \
                 if self.pool_type == POOLTYPE_PERSISTENT else QueuePool
             pool = poolclass(self.settings_dict)
-        
-        if self.connection is None:
-            self.connection = pool.getconn()
-            if self.connection is not None and not self._try_connected():
-                self.connection = None
 
-        if self.connection is not None:
-            self.connection.set_client_encoding('UTF8')
-            self.connection.set_isolation_level(self.isolation_level)
+        if not self.connection:
+            self.connection = pool.getconn()
+            if self.connection is not None and not self._valid_connection():
+                self.connection.close()
+                self.connection = None
 
         return super(PoolMixIn, self)._cursor()

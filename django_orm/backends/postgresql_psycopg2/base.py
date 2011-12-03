@@ -6,12 +6,10 @@ from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper as BaseD
 
 from django_orm.backends.postgresql_psycopg2.creation import DatabaseCreation
 from django_orm.backends.postgresql_psycopg2.operations import DatabaseOperations
-from django_orm.backends.pool_mixin import PoolMixIn
+from django_orm.backends.postgresql_psycopg2.pool import PoolMixIn
 
 import psycopg2
 import uuid
-
-pool = None
 
 class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
     """
