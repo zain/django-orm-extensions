@@ -45,6 +45,8 @@ setup(
         'django_orm.backends.mysql',
         'django_orm.backends.sqlite3',
         'django_orm.gis',
+        'django_orm.gis.backends',
+        'django_orm.gis.backends.postgis',
         'django_orm.templatetags',
     ],
     include_package_data = True,
