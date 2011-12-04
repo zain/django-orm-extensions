@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, register_type
+from django.db import models
+from django.utils.encoding import force_unicode
+
 
 class ComplexTypeError(Exception):
     pass
@@ -8,15 +11,15 @@ class ComplexTypeError(Exception):
 
 def adapt_complex(obj):
     return AsIs(obj._as_sql())
-    
+ 
 
-class ComplexTypeMeta(type):
+class CompositeTypeMeta(type):
     def __init__(cls, name, bases, attrs):
-        super(ComplexTypeMeta, cls).__init__(name, bases, attrs)
+        super(CompositeTypeMeta, cls).__init__(name, bases, attrs)
         
         cls.fields = {}
         for key, value in attrs.iteritems():
-            if isinstance(value, CxField):
+            if isinstance(value, CompositeField):
                 setattr(value, '_name', key)
                 cls.fields[key] = value
         
@@ -26,9 +29,9 @@ class ComplexTypeMeta(type):
             register_adapter(cls,  adapt_complex)
 
         cls.type_name = classmethod(lambda x: cls.__name__.lower())
-        setattr(cls, '_as_sql_fields', classmethod(ComplexTypeMeta._as_sql_fields))
-        setattr(cls, '_as_create_sql', classmethod(ComplexTypeMeta._create_sql))
-        setattr(cls, '_as_sql', classmethod(ComplexTypeMeta._as_sql))
+        setattr(cls, '_as_sql_fields', classmethod(CompositeTypeMeta._as_sql_fields))
+        setattr(cls, '_as_create_sql', classmethod(CompositeTypeMeta._create_sql))
+        setattr(cls, '_as_sql', classmethod(CompositeTypeMeta._as_sql))
 
     def _as_sql_fields(self):
         return u",\n    ".join([x._as_sql() for x in \
@@ -42,22 +45,23 @@ class ComplexTypeMeta(type):
         )
 
     def _as_sql(self):
-        template = u"'(%s)'::%s"
+        template = u"ROW(%s)"
 
         lista = []
         for item in [self.fields[oi]._value for oi in self.order]:
             if isinstance(item, (long, int, float)):
                 lista.append(unicode(item))
+            elif isinstance(item, CompositeType):
+                lista.append(item._as_sql())
             else:
-                lista.append('"%s"' % (unicode(item)))
+                lista.append("'%s'" % (unicode(item)))
 
         return template % (
             u", ".join(lista),
-            self.type_name(),
         )
 
 
-class CxField(object):
+class CompositeField(object):
     _value = None
     _name = None
 
@@ -80,8 +84,8 @@ class CxField(object):
         return u"%s %s" % (self._name, self.field_repr)
 
 
-class ComplexType(object):
-    __metaclass__ = ComplexTypeMeta
+class CompositeType(object):
+    __metaclass__ = CompositeTypeMeta
     order = ()
 
     def __init__(self, *args, **kwargs):
@@ -100,7 +104,7 @@ class ComplexType(object):
             setattr(self, oitem, getattr(wrapper, oitem, None))
 
     def __repr__(self):
-        return u"<ComplexType %s>" % (
+        return u"<CompositeType %s>" % (
             ", ".join(["%s=%s" % (x._name, x._value) \
                 for x in self.fields.itervalues()]))
 
@@ -110,22 +114,12 @@ class ComplexType(object):
         return '"%s"' % name
 
 
-class Person(ComplexType):
-    name = CxField('varchar(255)', coerce=unicode)
-    age = CxField('integer', coerce=int)
-    order = ('age', 'name')
-
-
-from django.db import models
-from django.utils.encoding import force_unicode
-
-
-class ComplexModelField(models.Field):
+class CompositeModelField(models.Field):
     __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
         self._type = kwargs.pop('type')
-        super(ComplexModelField, self).__init__(*args, **kwargs)
+        super(CompositeModelField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
         raise TypeError("At the moment is not implemented")
