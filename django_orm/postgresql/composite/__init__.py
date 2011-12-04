@@ -122,10 +122,10 @@ class CompositeModelField(models.Field):
         super(CompositeModelField, self).__init__(*args, **kwargs)
 
     def get_prep_lookup(self, lookup_type, value):
-        raise TypeError("At the moment is not implemented")
+        return value
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return get_prep_lookup(lookup_type, value)
+        return self.get_prep_lookup(lookup_type, value)
 
     def db_type(self, connection):
         return self._type.type_name()
@@ -138,6 +138,8 @@ class CompositeModelField(models.Field):
         return value
 
 
+import re
+
 class C(object):
     """
     Posible query string:
@@ -148,12 +150,28 @@ class C(object):
 
     def __init__(self, querystring, *args, **kwargs):
         self.qstr = querystring
+        self.qstrl = querystring.lower()
         self.args = args
         self.kwargs = kwargs
 
     def __call__(self, *args, **kwargs):
-        qstr = self.qstr.replace("?", "%%s") \
-            if "like" not in self.qstr.lower() \
-            else self.qstr.replace("?", "%%s%")
+        # unaccent(%s) LIKE unaccent(%%s)
+        # ('lower(unaccent(%s)) LIKE lower(unaccent(%%s))'
+        qstr = self.qstr
 
-        return (qstr, args)
+        if "iunaccent" in self.qstrl:
+            p1, p2, p3 = self.qstr.split(maxsplit=3)
+            qstr = u" ".join([u"lower(unaccent(%s))" % p1, u'LIKE', u"lower(unaccent(%s))" % p3])
+
+        elif "unaccent" in self.qstrl:
+            p1, p2, p3 = re.split(r'\s', self.qstr, 3, re.U)
+            qstr = u" ".join([u"unaccent(%s)" % p1, u'LIKE', "unaccent(%s)" % p3])
+
+            
+        qstr = qstr.replace("?", "%s") \
+            if "like" not in self.qstr.lower() \
+            else self.qstr.replace("?", "%s")
+
+        print qstr, self.args
+
+        return (qstr, list(self.args))

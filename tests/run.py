@@ -45,9 +45,11 @@ test_settings = {
     'ROOT_URLCONF': 'tests.test_app.urls',
     'LOGGING': {
         'version': 1,
-        'disable_existing_loggers': False,
+        'disable_existing_loggers': True,
         'handlers': {
-            'console':{ 'level':'DEBUG', 'class':'logging.StreamHandler'}
+            'console':{ 'level':'DEBUG', 'class':'logging.StreamHandler'},
+            'file': {'level':'DEBUG', 'class':'logging.FileHandler', 
+                'filename': '/tmp/djangoorm_test_querys.log'},
         },
         'loggers': {
             'django': {
@@ -56,7 +58,7 @@ test_settings = {
                 'level':'INFO',
             },
             'django.db.backends': {
-                'handlers': ['console'],
+                'handlers': ['file'],
                 'level': 'DEBUG',
                 'propagate': False,
             }

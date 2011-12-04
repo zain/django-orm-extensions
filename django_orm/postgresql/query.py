@@ -83,6 +83,8 @@ lookups = {
     'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),
 }
 
+from django_orm.postgresql.composite import C
+
 class PgWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
         lvalue, lookup_type, value_annot, params_or_value = child
@@ -94,7 +96,7 @@ class PgWhereNode(WhereNode):
 
         model_alias, field_name, db_type = lvalue
         field_sql = self.sql_for_columns(lvalue, qn, connection)
-        
+
         if db_type in GEOMETRIC_TYPES and lookup_type in lookups:
             return lookups[lookup_type](field_sql, params)
 
@@ -125,6 +127,9 @@ class PgWhereNode(WhereNode):
 
             else:
                 raise TypeError('invalid lookup type')
+
+        elif isinstance(params, tuple) and len(params) == 2:
+            return params
 
         return super(PgWhereNode, self).make_atom(child, qn, connection)
 
