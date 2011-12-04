@@ -167,11 +167,8 @@ class C(object):
             p1, p2, p3 = re.split(r'\s', self.qstr, 3, re.U)
             qstr = u" ".join([u"unaccent(%s)" % p1, u'LIKE', "unaccent(%s)" % p3])
 
-            
         qstr = qstr.replace("?", "%s") \
             if "like" not in self.qstr.lower() \
             else self.qstr.replace("?", "%s")
-
-        print qstr, self.args
 
         return (qstr, list(self.args))
