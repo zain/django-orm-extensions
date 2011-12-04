@@ -11,6 +11,35 @@ from .models import IntModel, TextModel, DoubleModel, VarcharModel
 from .models import ByteaModel, IntervalModel, GeomModel
 
 
+from .models import Foo2Model, FooModel, FooBigModel
+from .composite_types import Person, Account
+
+class CompositeTypesSimpleTest(TestCase):
+    def setUp(self):
+        self.o1 = FooModel.objects.create(
+            person = Person(name="Andrei Antoukh", age=23)
+        )
+        self.o2 = FooModel.objects.create(
+            person = Person(name="Francisco", age=14)
+        )
+
+    def tearDown(self):
+        self.o1.delete()
+        self.o2.delete()
+
+    def test_simple_get(self):
+        p1 = FooModel.objects.get(pk=self.o1.id)
+        self.assertIsInstance(p1.person, Person)
+        self.assertEqual(p1.person.name, u"Andrei Antoukh")
+
+    def test_simple_save(self):
+        self.o1.person.name = u"Carlos"
+        self.o1.save()
+
+        p1 = FooModel.objects.get(pk=self.o1.id)
+        self.assertEqual(p1.person.name, u"Carlos")
+
+
 class DoublePrecisionArrayFieldTest(TestCase):
     def setUp(self):
         DoubleModel.objects.all().delete()

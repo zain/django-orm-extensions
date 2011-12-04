@@ -44,3 +44,21 @@ class GeomModel(models.Model):
     ph = PathField()
 
     objects = Manager()
+
+
+from .composite_types import Person, Account
+from django_orm.postgresql.composite import CompositeModelField
+
+class Foo2Model(models.Model):
+    account = CompositeModelField(type=Account, null=True)
+    objects = Manager()
+
+
+class FooModel(models.Model):
+    person = CompositeModelField(type=Person, null=True)
+    objects = Manager()
+
+
+class FooBigModel(models.Model):
+    foo = models.ForeignKey(FooModel, related_name='big')
+    objects = Manager()

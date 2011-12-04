@@ -136,3 +136,24 @@ class CompositeModelField(models.Field):
             obj._with_wrapper(value)
             return obj
         return value
+
+
+class C(object):
+    """
+    Posible query string:
+        "(boss).person.name == ?"
+        "(boss).cualify  >= ?"
+        "(boss).account.name LIKE %?%"
+    """
+
+    def __init__(self, querystring, *args, **kwargs):
+        self.qstr = querystring
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
+        qstr = self.qstr.replace("?", "%%s") \
+            if "like" not in self.qstr.lower() \
+            else self.qstr.replace("?", "%%s%")
+
+        return (qstr, args)

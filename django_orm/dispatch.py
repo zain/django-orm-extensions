@@ -67,19 +67,15 @@ def load_types_for_app(app_path, connection):
         ct_mod = import_module(app_path +'.composite_types')
     except ImportError:
         return
-
-    valid_types_class = []
-    for typeclass in dir(ct_mod):
-        if typeclass.startswith('_'):
-            continue
-        valid_types_class.append(typeclass)
     
-    cursor = connection.cursor()
-    for type_class_str in set(valid_types_class):
-        klass = getattr(ct_mod, type_class_str)
-        if not getattr(klass, '_register', False) or not inspect.isclass(klass):
-            continue
+    if not hasattr(ct_mod, '__register__'):
+        return
 
+    valid_types_class = set(ct_mod.__register__)
+
+    cursor = connection.cursor()
+    for type_class_str in valid_types_class:
+        klass = getattr(ct_mod, type_class_str)
         tname, schema = klass.__name__.lower(), 'public'
         conn_status = connection.connection.status
         conn = connection.connection

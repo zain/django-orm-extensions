@@ -68,7 +68,7 @@ if __name__ == '__main__':
     test_args = sys.argv[1:]
     if "postgresql" in db_driver:
         test_settings['INSTALLED_APPS'] = [
-            'django_orm.cache',
+            'django_orm',
             'tests.hstore_app',
             'tests.aggregates_unaccent_app',
             'tests.fts_app',
@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     elif "mysql" in db_driver:
         test_settings['INSTALLED_APPS'] = [
-            'django_orm.cache',
+            'django_orm',
             'tests.f_expression_testapp',
             'tests.unaccent_lookup_test_app',
             'tests.ormcache_testapp',
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     elif "sqlite" in db_driver:
         test_settings['INSTALLED_APPS'] = [
-            'django_orm.cache',
+            'django_orm',
             'tests.f_expression_testapp',
             'tests.unaccent_lookup_test_app',
             'tests.ormcache_testapp',
