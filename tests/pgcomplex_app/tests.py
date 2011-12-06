@@ -233,43 +233,43 @@ class GeometricFieldsTest(TestCase):
         GeomModel.objects.all().delete()
         self.models = [
             GeomModel.objects.create(
-                pt = Point(1,2),
+                pt = Point((1,2)),
                 #pl = Polygon((1,2), (3,4), (5,6), (-2,4), (1,2)),
-                ln = Lseg(1,2,3,4),
-                bx = Box(1,1,4,4),
-                cr = Circle(2,3,5),
-                ph = Path((1,2),(2,2),(3,2), closed=False)
+                ln = Lseg([1,2,3,4]),
+                bx = Box([1,1,4,4]),
+                cr = Circle([2,3,5]),
+                ph = Path([(1,2),(2,2),(3,2)])
             ),
             GeomModel.objects.create(
-                pt = Point(-2,-2),
+                pt = Point((-2,-2)),
                 #pl = Polygon((2,2), (3,4), (-5,6), (-2,4), (2,2)),
-                ln = Lseg(-4,-4,0,0),
-                bx = Box(1,1,-4,-4),
-                cr = Circle(2,3,3),
-                ph = Path((1,2),(2,2),(3,2), closed=False)
+                ln = Lseg([-4,-4,0,0]),
+                bx = Box([1,1,-4,-4]),
+                cr = Circle([2,3,3]),
+                ph = Path([(1,2),(2,2),(3,2)])
             ),
             GeomModel.objects.create(
-                pt = Point(1,2),
+                pt = Point((1,2)),
                 #pl = Polygon((1,2), (3,4), (5,6), (-2,4), (1,2)),
-                ln = Lseg(5,2,3,4),
-                bx = Box(1,3,4,3),
-                cr = Circle(4,5,10),
-                ph = Path((1,2),(2,2),(1,2), closed=True)
+                ln = Lseg([5,2,3,4]),
+                bx = Box([1,3,4,3]),
+                cr = Circle([4,5,10]),
+                ph = Path([(1,2),(2,2),(1,2)])
             ),
             GeomModel.objects.create(
-                bx = Box(0,0,2,2),
+                bx = Box([0,0,2,2]),
             ),
         ]
 
     def test_same_as(self):
         qs = GeomModel.objects.filter(
-            bx__same_as=Box(1,3,4,3)
+            bx__same_as=Box([1,3,4,3])
         )
         self.assertEqual(qs.count(), 1)
     
     def test_strictly_left(self):
         qs = GeomModel.objects.filter(
-            cr__strictly_left_of=Circle(10,5,1)
+            cr__strictly_left_of=Circle([10,5,1])
         )
         self.assertEqual(qs.count(), 2)
 
@@ -291,7 +291,7 @@ class GeometricFieldsTest(TestCase):
     
     def test_overlap(self):
         qs = GeomModel.objects.filter(
-            bx__overlap = Box(2,2,6,6)
+            bx__overlap = Box([2,2,6,6])
         )
         self.assertEqual(qs.count(), 3)
 
@@ -299,28 +299,20 @@ class GeometricFieldsTest(TestCase):
         qs = GeomModel.objects.filter(
             ph__is_closed=True
         )
-        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.count(), 0)
 
     def test_is_open(self):
         qs = GeomModel.objects.filter(
             ph__is_open=False
         )
-        self.assertEqual(qs.count(), 2)
+        self.assertEqual(qs.count(), 3)
     
-    def test_distance(self):
-        GeomModel.objects.create(
-            cr = Circle(0,0,1),
-        )
-
-        qs = GeomModel.objects.filter(cr__distance=(Circle(5,0,1), 3))
-        self.assertEqual(qs.count(), 1)
-
     def test_num_points(self):
         GeomModel.objects.create(
-            ph = Path((1,2),(2,3),(3,4))
+            ph = Path([(1,2),(2,3),(3,4)])
         )
         GeomModel.objects.create(
-            ph = Path((1,2),(2,3),(3,4),(7,1))
+            ph = Path([(1,2),(2,3),(3,4),(7,1)])
         )
 
         qs = GeomModel.objects.filter(ph__numpoints=3)
@@ -334,6 +326,6 @@ class GeometricFieldsTest(TestCase):
 
     def test_center(self):
         qs = GeomModel.objects.filter(
-            bx__center=Point(1,1)
+            bx__center=Point([1,1])
         )
         self.assertEqual(qs.count(), 1)
