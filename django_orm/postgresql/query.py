@@ -61,7 +61,6 @@ lookups = {
     'is_horizontal': lambda field, param: ('(?- %s) = %%s' % field, [param]),
     'is_perpendicular': lambda field, param: ('%s ?-| %%s' % field, [param]),
     'is_parallel': lambda field, param: ('%s ?|| %%s' % field, [param]),
-    'contained_in_or_on': lambda field, param: ('%s ?|| %%s' % field, [param]),
     'contains': lambda field, param: ('%s @> %%s' % field, [param]),
     'same_as': lambda field, param: ('%s ~= %%s' % field, [param]),
     'indexexact': lambda field, param: ('%s[%s] = %%s' % (field, param[0]+1), [param[1]]),
@@ -79,7 +78,7 @@ lookups = {
     'numpoints_lte': lambda field, param: ('# %s <= %%s' % field, [param]),
 
     'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
-        if is_list else ('%%s = ANY(%s)' % field, [param]),
+        if not is_list else ('%%s = ANY(%s)' % field, [param]),
     'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),
 }
 
@@ -96,6 +95,8 @@ class PgWhereNode(WhereNode):
         field_sql = self.sql_for_columns(lvalue, qn, connection)
         
         if db_type in GEOMETRIC_TYPES and lookup_type in lookups:
+            if lookup_type == 'contains':
+                return lookups[lookup_type](field_sql, params, False)
             return lookups[lookup_type](field_sql, params)
 
         elif db_type.endswith('[]'):

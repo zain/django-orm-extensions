@@ -2,6 +2,7 @@
 
 import re
 from django.utils import simplejson as json
+from django.db import connection
 
 rx_circle_float = re.compile(r'<\(([\d\.\-]*),([\d\.\-]*)\),([\d\.\-]*)>')
 rx_line = re.compile(r'\[\(([\d\.\-]*),\s*([\w\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\+]*)\)\]')
@@ -61,6 +62,21 @@ class Circle(tuple):
     @property
     def point(self):
         return Point(self[:-1])
+
+    def to_box(self):
+        if hasattr(self, '_box'):
+            return self._box
+
+        cur = connection.cursor()
+        cur.execute("select box(%s) as _;", [self])
+        res = cur.fetchone()
+        cur.close()
+
+        if not res:
+            raise ValueError("Unexpected error")
+
+        self._box = res[0]
+        return res[0]
 
 
 class Lseg(tuple):
@@ -208,7 +224,7 @@ def cast_circle(value, cur):
     if not rxres:
         raise ValueError("bad circle representation: %r" % value)
 
-    return Circle(*[int(x) if "." not in x else float(x) \
+    return Circle([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_lseg(value, cur):
@@ -219,7 +235,7 @@ def cast_lseg(value, cur):
     if not rxres:
         raise ValueError("bad lseg representation: %r" % value)
 
-    return Lseg(*[int(x) if "." not in x else float(x) \
+    return Lseg([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_box(value, cur):
@@ -230,7 +246,7 @@ def cast_box(value, cur):
     if not rxres:
         raise ValueError("bad box representation: %r" % value)
 
-    return Box(*[int(x) if "." not in x else float(x) \
+    return Box([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_path(value, cur):
@@ -246,7 +262,7 @@ def cast_path(value, cur):
     if not points.strip():
         raise ValueError("bad path representation: %r" % value)
     
-    return Path(*[(
+    return Path([(
         int(x) if "." not in x else float(x), \
         int(y) if "." not in y else float(y) \
     ) for x, y in rx_point.findall(points)], closed=is_closed)
@@ -264,13 +280,12 @@ def cast_polygon(value, cur):
     if not points.strip():
         raise ValueError("bad path representation: %r" % value)
     
-    return Polygon(*[(
+    return Polygon([(
         int(x) if "." not in x else float(x), \
         int(y) if "." not in y else float(y) \
     ) for x, y in rx_point.findall(points)], closed=is_closed)
 
 
-from django.db import connection
 cur = connection.cursor()
 cur.execute("SELECT NULL::point, NULL::circle, NULL::line, NULL::box, "
             "NULL::path, NULL::polygon, NULL::lseg")
