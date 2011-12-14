@@ -121,6 +121,22 @@ class Box(tuple):
     def end_point(self):
         return Point(self[2:])
 
+    @property
+    def center_point(self):
+        if hasattr(self, '_center_point'):
+            return self._center_point
+
+        cur = connection.cursor()
+        cur.execute("select @@ %s;", [self])
+        res = cur.fetchone()
+        cur.close()
+
+        if not res:
+            raise ValueError("Unexpected error")
+
+        self._center_point = res[0]
+        return res[0]
+
 
 class Path(tuple):
     closed = False
