@@ -2,6 +2,7 @@
 
 import re
 from django.utils import simplejson as json
+from django.db import connection
 
 rx_circle_float = re.compile(r'<\(([\d\.\-]*),([\d\.\-]*)\),([\d\.\-]*)>')
 rx_line = re.compile(r'\[\(([\d\.\-]*),\s*([\w\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\+]*)\)\]')
@@ -10,19 +11,16 @@ rx_box = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\
 rx_path_identify = re.compile(r'^((?:\(|\[))(.*)(?:\)|\])$')
 
 
-class Point(object):
+class Point(tuple):
     """ 
     Class that rep resents of geometric point. 
     """
 
-    x = None
-    y = None
-    
-    def __init__(self, *args, **kwargs):
+    def __init__(self, args):
         if len(args) == 2:
-            self.x, self.y = args
-        elif len(args) == 1 and isinstance(args[0], (list,tuple)):
-            self.x, self.y = args[0]
+            super(Point, self).__init__(args)
+        else: 
+            raise ValueError("Max is 2 elements")
         self._validate()
 
     def _validate(self):
@@ -31,33 +29,21 @@ class Point(object):
             raise ValueError("invalid data")
 
     def __repr__(self):
-        return "<Point(%s,%s)>" % (self.x, self.y)
+        return "<Point(%s,%s)>" % self
 
-    def __iter__(self):
-        yield self.x
-        yield self.y
-
-    def __lt__(self, val):
-        return tuple(self) < tuple(val)
-
-    def __gt__(self, val):
-        return tuple(self) > tuple(val)
-
-    def __eq__(self, val):
-        return tuple(self) == tuple(val)
+    @property
+    def x(self):
+        return self[0]
+    
+    @property
+    def y(self):
+        return self[1]
 
 
-class Circle(object):
-    point = None
-    r = None
-
-    def __init__(self, *args, **kwargs):
+class Circle(tuple):
+    def __init__(self, args):
         if len(args) == 3:
-            self.point = Point(args[:2])
-            self.r = args[2]
-        elif len(args) == 2:
-            self.point = Point(*args[0])
-            self.r = args[1]
+            super(Circle, self).__init__(args)
         else:
             raise ValueError("invalid data")
         self._validate()
@@ -66,27 +52,37 @@ class Circle(object):
         if not isinstance(self.r, (int, long, float)):
             raise ValueError("invalid data")
 
-    def __iter__(self):
-        yield self.point.x
-        yield self.point.y
-        yield self.r
-
     def __repr__(self):
         return "<Circle(%s,%s)>" % (self.point, self.r)
 
+    @property
+    def r(self):
+        return self[2]
+
+    @property
+    def point(self):
+        return Point(self[:-1])
+
+    def to_box(self):
+        if hasattr(self, '_box'):
+            return self._box
+
+        cur = connection.cursor()
+        cur.execute("select box(%s) as _;", [self])
+        res = cur.fetchone()
+        cur.close()
+
+        if not res:
+            raise ValueError("Unexpected error")
+
+        self._box = res[0]
+        return res[0]
 
 
-class Line(object):
-    init_point = None
-    end_point = None
-
-    def __init__(self, *args, **kwargs):
+class Lseg(tuple):
+    def __init__(self, args):
         if len(args) == 4:
-            self.init_point = Point(*args[:2])
-            self.end_point = Point(*args[2:])
-        elif len(args) == 2:
-            self.init_point = Point(*args[0])
-            self.end_point = Point(*args[1])
+            super(Lseg, self).__init__(args)
         else:
             raise ValueError("invalid content")
 
@@ -95,76 +91,79 @@ class Line(object):
         yield tuple(self.end_point)
 
     def __repr__(self):
-        return "<Line(%s, %s)>" % \
-            (self.init_point, self.end_point)
-
-
-class Lseg(Line):
-    def __repr__(self):
         return "<Lseg(%s, %s)>" % \
             (self.init_point, self.end_point)
 
+    @property
+    def init_point(self):
+        return Point(self[:2])
 
-class Box(object):
-    first_vertex = None
-    second_vertex = None
+    @property
+    def end_point(self):
+        return Point(self[2:])
 
-    def __init__(self, *args, **kwargs):
+
+class Box(tuple):
+    def __init__(self, args):
         if len(args) == 4:
-            self.first_vertex = Point(*args[:2])
-            self.second_vertex = Point(*args[2:])
-        elif len(args) == 2:
-            self.first_vertex = Point(*args[0])
-            self.second_vertex = Point(*args[1])
+            super(Box, self).__init__(args)
         else:
             raise ValueError("invalid content")
 
-        self._reorder()
-    
-    def _reorder(self):
-        if self.first_vertex < self.second_vertex:
-            self.first_vertex, self.second_vertex = \
-                self.second_vertex, self.first_vertex
-
-    def __iter__(self):
-        yield tuple(self.first_vertex)
-        yield tuple(self.second_vertex)
-
     def __repr__(self):
-        return "<Box(%s,%s),(%s,%s)>" % (
-            self.first_vertex.x,
-            self.first_vertex.y,
-            self.second_vertex.x,
-            self.second_vertex.y
-        )
+        return "<Box(%s,%s),(%s,%s)>" % self
 
-class Path(object):
+    @property
+    def init_point(self):
+        return Point(self[:2])
+
+    @property
+    def end_point(self):
+        return Point(self[2:])
+
+    @property
+    def center_point(self):
+        if hasattr(self, '_center_point'):
+            return self._center_point
+
+        cur = connection.cursor()
+        cur.execute("select @@ %s;", [self])
+        res = cur.fetchone()
+        cur.close()
+
+        if not res:
+            raise ValueError("Unexpected error")
+
+        self._center_point = res[0]
+        return res[0]
+
+
+class Path(tuple):
     closed = False
 
-    def __init__(self, *args, **kwargs):
-        self.points = []
+    def __init__(self, args):
+        points = []
         for item in args:
             if isinstance(item, (tuple, list, Point)):
-                self.points.append(tuple(item))
+                points.append(tuple(item))
             else:
-                self.points = []
+                points = []
                 raise ValueError("invalid content")
         
-        self.closed = bool(kwargs.get('closed', False))
-        if len(self.points) == 0:
-            raise ValueError("invalid content")
-    
-    def __iter__(self):
-        for item in self.points:
-            yield item
+        self.closed = isinstance(args, tuple)
 
+        if len(points) == 0:
+            raise ValueError("invalid content")
+
+        super(Path, self).__init__(points)
+    
     def __repr__(self):
-        return "<Path(%s) closed=%s>" % (len(self.points), self.closed)
+        return "<Path(%s) closed=%s>" % (len(self), self.closed)
 
 
 class Polygon(Path):
     def __repr__(self):
-        return "<Polygon(%s) closed=%s>" % (len(self.points), self.closed)
+        return "<Polygon(%s) closed=%s>" % (len(self), self.closed)
 
 
 from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, register_type
@@ -172,22 +171,14 @@ from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, registe
 """ PYTHON->SQL ADAPTATION """
 
 def adapt_point(point):
-    return AsIs("'(%s, %s)'::point" % (adapt(point.x), adapt(point.y)))
+    return AsIs(u"point '(%s, %s)'" % (adapt(point.x), adapt(point.y)))
 
 def adapt_circle(c):
-    return AsIs("'<(%s,%s),%s>'::circle" % \
+    return AsIs(u"circle '<(%s,%s),%s>'" % \
         (adapt(c.point.x), adapt(c.point.y), adapt(c.r)))
 
-def adapt_line(l):
-    return AsIs("'[(%s,%s), (%s,%s)]'::line" % (\
-        adapt(l.init_point.x),
-        adapt(l.init_point.y),
-        adapt(l.end_point.x),
-        adapt(l.end_point.y)
-    ))
-
 def adapt_lseg(l):
-    return AsIs("'[(%s,%s), (%s,%s)]'::lseg" % (\
+    return AsIs(u"'[(%s,%s), (%s,%s)]'::lseg" % (\
         adapt(l.init_point.x),
         adapt(l.init_point.y),
         adapt(l.end_point.x),
@@ -196,10 +187,10 @@ def adapt_lseg(l):
 
 def adapt_box(box):
     return AsIs("'(%s,%s),(%s,%s)'::box" % (
-        adapt(box.first_vertex.x),
-        adapt(box.first_vertex.y),
-        adapt(box.second_vertex.x),
-        adapt(box.second_vertex.y)
+        adapt(box.init_point.x),
+        adapt(box.init_point.y),
+        adapt(box.end_point.x),
+        adapt(box.end_point.y)
     ))
 
 def adapt_path(path):
@@ -222,7 +213,6 @@ def adapt_polygon(path):
 
 register_adapter(Point, adapt_point)
 register_adapter(Circle, adapt_circle)
-register_adapter(Line, adapt_line)
 register_adapter(Box, adapt_box)
 register_adapter(Path, adapt_path)
 register_adapter(Polygon, adapt_polygon)
@@ -250,18 +240,7 @@ def cast_circle(value, cur):
     if not rxres:
         raise ValueError("bad circle representation: %r" % value)
 
-    return Circle(*[int(x) if "." not in x else float(x) \
-        for x in rxres.groups()])
-
-def cast_line(value, cur):
-    if value is None:
-        return None
-
-    rxres = rx_line.search(value)
-    if not rxres:
-        raise ValueError("bad line representation: %r" % value)
-
-    return Line(*[int(x) if "." not in x else float(x) \
+    return Circle([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_lseg(value, cur):
@@ -272,7 +251,7 @@ def cast_lseg(value, cur):
     if not rxres:
         raise ValueError("bad lseg representation: %r" % value)
 
-    return Lseg(*[int(x) if "." not in x else float(x) \
+    return Lseg([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_box(value, cur):
@@ -283,7 +262,7 @@ def cast_box(value, cur):
     if not rxres:
         raise ValueError("bad box representation: %r" % value)
 
-    return Box(*[int(x) if "." not in x else float(x) \
+    return Box([int(x) if "." not in x else float(x) \
         for x in rxres.groups()])
 
 def cast_path(value, cur):
@@ -299,7 +278,7 @@ def cast_path(value, cur):
     if not points.strip():
         raise ValueError("bad path representation: %r" % value)
     
-    return Path(*[(
+    return Path([(
         int(x) if "." not in x else float(x), \
         int(y) if "." not in y else float(y) \
     ) for x, y in rx_point.findall(points)], closed=is_closed)
@@ -317,13 +296,12 @@ def cast_polygon(value, cur):
     if not points.strip():
         raise ValueError("bad path representation: %r" % value)
     
-    return Polygon(*[(
+    return Polygon([(
         int(x) if "." not in x else float(x), \
         int(y) if "." not in y else float(y) \
     ) for x, y in rx_point.findall(points)], closed=is_closed)
 
 
-from django.db import connection
 cur = connection.cursor()
 cur.execute("SELECT NULL::point, NULL::circle, NULL::line, NULL::box, "
             "NULL::path, NULL::polygon, NULL::lseg")
@@ -344,7 +322,6 @@ connection.close()
 
 POINT = new_type((point_oid,), "POINT", cast_point)
 CIRCLE = new_type((circle_oid,), "CIRCLE", cast_circle)
-LINE = new_type((line_oid,), "LINE", cast_line)
 BOX = new_type((box_oid,), "BOX", cast_box)
 PATH = new_type((path_oid,), "PATH", cast_path)
 POLYGON = new_type((polygon_oid,), "POLYGON", cast_polygon)
@@ -352,7 +329,6 @@ LSEG = new_type((lseg_oid,), "LSEG", cast_lseg)
 
 register_type(POINT)
 register_type(CIRCLE)
-register_type(LINE)
 register_type(BOX)
 register_type(PATH)
 register_type(POLYGON)

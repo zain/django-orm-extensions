@@ -9,6 +9,7 @@ pool = None
 
 class PoolMixIn(object):
     pool_enabled = False
+    pool_type = POOLTYPE_PERSISTENT
 
     def __init__(self, *args, **kwargs):
         super(PoolMixIn, self).__init__(*args, **kwargs)
