@@ -61,7 +61,6 @@ lookups = {
     'is_horizontal': lambda field, param: ('(?- %s) = %%s' % field, [param]),
     'is_perpendicular': lambda field, param: ('%s ?-| %%s' % field, [param]),
     'is_parallel': lambda field, param: ('%s ?|| %%s' % field, [param]),
-    'contains': lambda field, param: ('%s @> %%s' % field, [param]),
     'same_as': lambda field, param: ('%s ~= %%s' % field, [param]),
     'indexexact': lambda field, param: ('%s[%s] = %%s' % (field, param[0]+1), [param[1]]),
     'distinct': lambda field, param: ('%s <> %%s' % field, [param]),
@@ -78,7 +77,7 @@ lookups = {
     'numpoints_lte': lambda field, param: ('# %s <= %%s' % field, [param]),
 
     'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
-        if not is_list else ('%%s = ANY(%s)' % field, [param]),
+        if not is_list else (u'%%s = ANY(%s)' % field, [param]),
     'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),
 }
 

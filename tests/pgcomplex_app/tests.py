@@ -106,7 +106,7 @@ class TextArrayFieldTest(TestCase):
         self.p3 = TextModel.objects.create(lista=['привет', 'моя', 'страна'])
     
     def test_text_array_contains(self):
-        qs = TextModel.objects.filter(lista__contains=['hola', 'mundo'])
+        qs = TextModel.objects.filter(lista__contains='mundo')
         self.assertEqual(qs.count(), 1)
 
         qs = TextModel.objects.filter(lista__contains=[u'привет', u'моя', u'страна'])

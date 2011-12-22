@@ -44,8 +44,6 @@ class ArrayField(models.Field):
                 value = u"{%s}" % (",".join(map(str, value)))
             else:
                 raise ValueError('invalid value')
-        else:
-            is_list = False
 
         return value, is_list
 
