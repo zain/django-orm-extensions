@@ -66,5 +66,5 @@ class ArrayField(models.Field):
     def to_python(self, value):
         if value and isinstance(value, (list,tuple)):
             if self._array_type in ('text') or "varchar" in self._array_type:
-                return map(lambda x: x.decode('utf-8'), value)
+                return map(force_unicode, value)
         return value
