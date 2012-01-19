@@ -3,10 +3,15 @@
 from django.utils.encoding import force_unicode
 from django.db import models, connections, transaction
 
+def auto_update_index_handler(sender, instance, *args, **kwargs):
+    sender._orm_manager.update_index(pk=instance.pk, using=kwargs['using'])
+
 class SearchManagerMixIn(object):
     vector_field = None
 
-    def __init__(self, fields=None, search_field='search_index', config='pg_catalog.english'):
+    def __init__(self, fields=None, search_field='search_index', 
+                                    config='pg_catalog.english',
+                                    auto_update_index = False):
         self.fields = None
         if fields is not None:
             if isinstance(fields, (list, tuple)):
@@ -18,9 +23,18 @@ class SearchManagerMixIn(object):
         self.vector_field = search_field
         self.default_weight = 'A'
         self.config = config
+        self.auto_update_index = auto_update_index
         super(SearchManagerMixIn, self).__init__()
 
     def contribute_to_class(self, cls, name):
+        # Add instance method for uptade index.
+        _update_index = lambda x: x._orm_manager.update_index(pk=x.pk)
+        setattr(cls, 'update_index', _update_index)
+
+        # Set auto update if need
+        if self.auto_update_index:
+            models.signals.post_save.connect(auto_update_index_handler, sender=cls)
+
         super(SearchManagerMixIn, self).contribute_to_class(cls, name)
 
     def _find_fields(self):
@@ -39,7 +53,7 @@ class SearchManagerMixIn(object):
         sql_template = "setweight(to_tsvector('%s', coalesce(unaccent(%s), '')), '%s')"
         return sql_template % (config, qn(f.column), weight)
 
-    def update_index(self, pk=None, config=None):
+    def update_index(self, pk=None, config=None, using=None):
         sql_instances = []
 
         if not self.fields:
@@ -62,7 +76,11 @@ class SearchManagerMixIn(object):
         sql = """UPDATE "%s" SET "%s" = %s%s""" % \
             (self.model._meta.db_table, self.vector_field, vector_sql, where_sql)
         
-        connection = connections[self.db]
+        if using is not None:
+            connection = connections[using]
+        else:
+            connection = connections[self.db]
+
         cursor = connection.cursor()
         cursor.execute(sql)
         cursor.close()

@@ -6,7 +6,7 @@ from django.utils.unittest import TestCase
 from django.utils import unittest
 from django.db import connection
 
-from .models import Person
+from .models import Person, Person2, Person3
 
 class TestFts(TestCase):
     def setUp(self):
@@ -20,6 +20,37 @@ class TestFts(TestCase):
             name=u'Pèpâ',
             description=u"Is a housewife",
         )
+
+
+    @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
+    def test_self_update_index(self):
+        obj = Person2.objects.create(
+            name=u'Pèpâ',
+            description=u"Is a housewife",
+        )
+        obj.update_index()
+
+        qs = Person2.objects.search(query="Pepa")
+        self.assertEqual(qs.count(), 1)
+
+
+    @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
+    def test_self_automatic_update_index(self):
+        obj = Person3(
+            name=u'Pèpâ',
+            description=u"Is a housewife",
+        )
+
+        obj.save()
+
+        qs = Person3.objects.search(query="Pepa")
+        self.assertEqual(qs.count(), 1)
+
+        obj.name = 'Andrei'
+        obj.save()
+
+        qs = Person3.objects.search(query="Pepa")
+        self.assertEqual(qs.count(), 0)
 
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_search_and(self):
