@@ -4,7 +4,7 @@ from django.db import connection
 from django_orm.postgresql.aggregates import Unaccent
 from django.utils.unittest import TestCase
 from django.utils import unittest
-from django.db import connection
+from django.db import connection, transaction
 
 from .models import Person, Person2, Person3
 
@@ -89,6 +89,31 @@ class TestFts(TestCase):
 
         qs = Person.objects.search(query="Pepo | Francisco", raw=True)
         self.assertEqual(qs.count(), 1)
+
+    @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
+    def test_transaction_test(self):
+        class TestException(Exception):
+            pass
+        
+        p = Person3(
+            name='Andrei1',
+            description='description1',
+        )
+        p.save()
+
+        try:
+            with transaction.commit_on_success():
+                p.name = 'Andrei2'
+                p.save()
+
+                qs = Person3.objects.search(query="Andrei2")
+                self.assertEqual(qs.count(), 1)
+                raise TestException()
+        except TestException:
+            pass
+
+        qs = Person3.objects.search(query="Andrei2")
+        self.assertEqual(qs.count(), 0)
 
     @unittest.skipIf(connection.vendor != 'postgresql', "Only for postgresql")
     def test_search_query_lookup(self):
