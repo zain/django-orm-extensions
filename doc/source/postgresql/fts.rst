@@ -47,15 +47,19 @@ To use it, you will need to add a new field and modifying one or the other metho
             if hasattr(self, '_orm_manager'):
                 self._orm_manager.update_index(pk=self.pk)
 
+The manager automatically injected, the method ``update_index`` to the model instance. 
+Also, not to override the save method, you can pass the parameter ``auto_update_index = True``, so 
+the index is updated automatically by calling the ``save`` method.
+
 
 Usage examples:
 ^^^^^^^^^^^^^^^
 
 - The config parameter is optional and defaults to 'pg_catalog.english'.
 - The fields parameter is optional. If a list of tuples, you can specify the ranking of each field, if it is None, it gets 'A' as the default.
-- It can also be a simple list of fields, and the ranking will be selected by default. If the field is empty, the index was applied to all fields CharField and TextField.
+- It can also be a simple list of fields, and the ranking will be selected by default. If the field is empty, the index was applied to all fields ``CharField`` and ``TextField``.
 
-To search, use the `search` method of the manager. The current version, the method used by default unaccented, so ignore the accents and searches are case insencitive.
+To search, use the ``search`` method of the manager. The current version, the method used by default unaccented, so ignore the accents and searches are case insencitive.
 
 .. code-block:: python
 
