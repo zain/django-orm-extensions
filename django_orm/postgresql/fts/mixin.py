@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from django.utils.encoding import force_unicode
-from django.db import models, connections
+from django.db import models, connections, transaction
 
 class SearchManagerMixIn(object):
     vector_field = None
+
     def __init__(self, fields=None, search_field='search_index', config='pg_catalog.english'):
         self.fields = None
         if fields is not None:
             if isinstance(fields, (list, tuple)):
-                if len(fields) > 0:
-                    if len(fields) > 0 and isinstance(fields[0], (list,tuple)):
-                        self.fields = fields
-                    else:
-                        self.fields = [(x, None) for x in fields]
+                if len(fields) > 0 and isinstance(fields[0], (list,tuple)):
+                    self.fields = fields
+                else:
+                    self.fields = [(x, None) for x in fields]
 
         self.vector_field = search_field
         self.default_weight = 'A'
@@ -65,8 +65,8 @@ class SearchManagerMixIn(object):
         connection = connections[self.db]
         cursor = connection.cursor()
         cursor.execute(sql)
-        cursor.execute("COMMIT;")
         cursor.close()
+        transaction.commit_unless_managed()
 
     def search(self, query, rank_field=None, rank_normalization=32, config=None, raw=False):
         if not config:

@@ -13,29 +13,23 @@ else:
 import logging
 log = logging.getLogger(__name__)
 
+from django.db import transaction
+
 class DatabaseCreation(BaseDatabaseCreation):
+    @transaction.commit_on_success
     def install_hstore_contrib(self):
-        # point to test database
         cursor = self.connection.cursor()
         cursor.execute("SELECT 1 FROM pg_type WHERE typname='hstore';")
         if cursor.fetchone():
             # skip if already exists
             return
         
+        cursor.execute('CREATE EXTENSION hstore;')
         if self.connection.postgres_version >= 90100:
             cursor.execute('CREATE EXTENSION hstore;')
-            cursor.execute('COMMIT;')
         else:
             raise Exception("hstore type not found in the database. "
                         "please install it from your 'contrib/hstore.sql' file")
-
-    #def create_test_db(self, *args, **kwargs):
-    #    self.connection.pool_enabled = False
-    #    return super(DatabaseCreation, self).create_test_db(*args, **kwargs)
-    
-    def _create_test_db(self, verbosity, autoclobber):
-        super(DatabaseCreation, self)._create_test_db(verbosity,autoclobber)
-        self.install_hstore_contrib()
 
     def sql_indexes_for_model(self, model, style):
         output = super(DatabaseCreation, self).sql_indexes_for_model(model, style)

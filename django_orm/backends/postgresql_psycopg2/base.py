@@ -28,7 +28,7 @@ class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
 
     def _register(self):
         self._register = lambda: None
-        self.creation.install_hstore_contrib()
+        #self.creation.install_hstore_contrib()
         register_hstore(self.connection, globally=True, unicode=True)
 
     def _cursor(self):
