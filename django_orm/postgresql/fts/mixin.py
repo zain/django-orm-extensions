@@ -110,18 +110,35 @@ class SearchManagerMixIn(object):
             if forced_managed:
                 transaction.leave_transaction_management(using=using)
 
-    def search(self, query, rank_field=None, rank_normalization=32, config=None, raw=False):
+    def search(self, query, rank_field=None, rank_normalization=32, config=None,
+               raw=False, using=None):
+
         if not config:
             config = self.config
 
-        function = "plainto_tsquery" if not raw else "to_tsquery"
-        ts_query = "%s('%s', unaccent('%s'))" % (function, config, force_unicode(query).replace("'","''"))
-        where = """ "%s" @@ %s""" % (self.vector_field, ts_query)
+        db_alias = using if using is not None else self.db
+        connection = connections[db_alias]
+        qn = connection.ops.quote_name
+
+        function = "to_tsquery" if raw else "plainto_tsquery"
+        ts_query = "%s('%s', unaccent('%s'))" % (
+            function,
+            config,
+            force_unicode(query).replace("'","''")
+        )
+        where = " %s @@ %s" % (qn(self.vector_field), ts_query)
+
         select_dict, order = {}, []
-
         if rank_field:
-            select_dict[rank_field] = 'ts_rank("%s", %s, %d)' % \
-                (self.vector_field, ts_query, rank_normalization)
-            order = ['-%s' % (rank_field)]
+            select_dict[rank_field] = 'ts_rank(%s, %s, %d)' % (
+                qn(self.vector_field),
+                ts_query, rank_normalization
+            )
+            order = ['-%s' % (rank_field,)]
 
-        return self.all().extra(select=select_dict, where=[where], order_by=order)
+        qs = self.all()
+        if using is not None:
+            qs = qs.using(using)
+
+        # TODO: use parametrized queries
+        return qs.extra(select=select_dict, where=[where], order_by=order)
