@@ -88,7 +88,7 @@ class SearchManagerMixIn(object):
         connection = connections[using]
         cursor = connection.cursor()
         cursor.execute(sql)
-        cursor.close()
+        # cursor.close() # TODO: close?
 
         try:
             if forced_managed:
