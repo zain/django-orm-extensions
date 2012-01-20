@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from itertools import repeat
+
 from django.utils.encoding import force_unicode
 from django.db import models, connections, transaction
 
@@ -27,7 +29,7 @@ class SearchManagerMixIn(object):
         super(SearchManagerMixIn, self).__init__()
 
     def contribute_to_class(self, cls, name):
-        # Add instance method for uptade index.
+        # Add instance method for update index.
         _update_index = lambda x: x._orm_manager.update_index(pk=x.pk)
         setattr(cls, 'update_index', _update_index)
 
@@ -41,63 +43,103 @@ class SearchManagerMixIn(object):
         fields = [f for f in self.model._meta.fields if isinstance(f,(models.CharField,models.TextField))]
         return [f.name for f in fields]
 
-    def _vector_sql(self, field, weight=None, config=None):
+    def _vector_sql(self, field, weight=None, config=None, using=None):
         if not weight:
             weight = self.default_weight
         if not config:
             config = self.config
         f = self.model._meta.get_field(field)
 
-        connection = connections[self.db]
+        using = using if using is not None else self.db
+        connection = connections[using]
         qn = connection.ops.quote_name
         sql_template = "setweight(to_tsvector('%s', coalesce(unaccent(%s), '')), '%s')"
         return sql_template % (config, qn(f.column), weight)
 
     def update_index(self, pk=None, config=None, using=None):
+        if using is None:
+            using = self.db
+
         sql_instances = []
 
         if not self.fields:
             self.fields = self._find_fields()
 
         for field, weight in self.fields:
-            sql_instances.append(self._vector_sql(field, weight, config))
+            sql_instances.append(self._vector_sql(field, weight, config, using))
 
         vector_sql = ' || '.join(sql_instances)
         where_sql = ''
-        
+        params = []
+
+        connection = connections[using]
+        qn = connection.ops.quote_name
+
         if pk is not None:
             if isinstance(pk, (list, tuple)):
-                where_sql = """ WHERE "%s" IN (%s)""" % \
-                    (self.model._meta.pk.column, ','.join([str(v) for v in pk]))
+                params = pk
             else:
-                where_sql = """ WHERE "%s" IN (%s)""" % \
-                    (self.model._meta.pk.column, pk)
-        
-        sql = """UPDATE "%s" SET "%s" = %s%s""" % \
-            (self.model._meta.db_table, self.vector_field, vector_sql, where_sql)
-        
-        if using is not None:
-            connection = connections[using]
+                params = [pk]
+            where_sql = "WHERE %s IN (%s)" % (
+                qn(self.model._meta.pk.column),
+                ','.join(repeat("%s", len(params)))
+            )
+
+        sql = "UPDATE %s SET %s = %s %s;" % (
+                qn(self.model._meta.db_table),
+                qn(self.vector_field),
+                vector_sql,
+                where_sql
+            )
+
+        if not transaction.is_managed(using=using):
+            transaction.enter_transaction_management(using=using)
+            forced_managed = True
         else:
-            connection = connections[self.db]
+            forced_managed = False
 
         cursor = connection.cursor()
-        cursor.execute(sql)
-        cursor.close()
-        transaction.commit_unless_managed()
+        cursor.execute(sql, params)
+        # cursor.close() # TODO: close?
 
-    def search(self, query, rank_field=None, rank_normalization=32, config=None, raw=False):
+        try:
+            if forced_managed:
+                transaction.commit(using=using)
+            else:
+                transaction.commit_unless_managed(using=using)
+        finally:
+            if forced_managed:
+                transaction.leave_transaction_management(using=using)
+
+    def search(self, query, rank_field=None, rank_normalization=32, config=None,
+               raw=False, using=None):
+
         if not config:
             config = self.config
-        
-        function = "plainto_tsquery" if not raw else "to_tsquery"
-        ts_query = "%s('%s', unaccent('%s'))" % (function, config, force_unicode(query).replace("'","''"))
-        where = """ "%s" @@ %s""" % (self.vector_field, ts_query)
+
+        db_alias = using if using is not None else self.db
+        connection = connections[db_alias]
+        qn = connection.ops.quote_name
+
+        function = "to_tsquery" if raw else "plainto_tsquery"
+        ts_query = "%s('%s', unaccent('%s'))" % (
+            function,
+            config,
+            force_unicode(query).replace("'","''")
+        )
+        where = " %s @@ %s" % (qn(self.vector_field), ts_query)
+
         select_dict, order = {}, []
-
         if rank_field:
-            select_dict[rank_field] = 'ts_rank("%s", %s, %d)' % \
-                (self.vector_field, ts_query, rank_normalization)
-            order = ['-%s' % (rank_field)]
+            select_dict[rank_field] = 'ts_rank(%s, %s, %d)' % (
+                qn(self.vector_field),
+                ts_query, rank_normalization
+            )
+            order = ['-%s' % (rank_field,)]
 
-        return self.all().extra(select=select_dict, where=[where], order_by=order)
+        qs = self.all()
+        if using is not None:
+            qs = qs.using(using)
+
+        # TODO: use parametrized queries
+        return qs.extra(select=select_dict, where=[where], order_by=order)
