@@ -43,14 +43,15 @@ class SearchManagerMixIn(object):
         fields = [f for f in self.model._meta.fields if isinstance(f,(models.CharField,models.TextField))]
         return [f.name for f in fields]
 
-    def _vector_sql(self, field, weight=None, config=None):
+    def _vector_sql(self, field, weight=None, config=None, using=None):
         if not weight:
             weight = self.default_weight
         if not config:
             config = self.config
         f = self.model._meta.get_field(field)
 
-        connection = connections[self.db]
+        using = using if using is not None else self.db
+        connection = connections[using]
         qn = connection.ops.quote_name
         sql_template = "setweight(to_tsvector('%s', coalesce(unaccent(%s), '')), '%s')"
         return sql_template % (config, qn(f.column), weight)
@@ -65,7 +66,7 @@ class SearchManagerMixIn(object):
             self.fields = self._find_fields()
 
         for field, weight in self.fields:
-            sql_instances.append(self._vector_sql(field, weight, config))
+            sql_instances.append(self._vector_sql(field, weight, config, using))
 
         vector_sql = ' || '.join(sql_instances)
         where_sql = ''
