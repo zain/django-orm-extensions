@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from itertools import repeat
+
 from django.utils.encoding import force_unicode
 from django.db import models, connections, transaction
 
@@ -27,7 +29,7 @@ class SearchManagerMixIn(object):
         super(SearchManagerMixIn, self).__init__()
 
     def contribute_to_class(self, cls, name):
-        # Add instance method for uptade index.
+        # Add instance method for update index.
         _update_index = lambda x: x._orm_manager.update_index(pk=x.pk)
         setattr(cls, 'update_index', _update_index)
 
@@ -67,17 +69,27 @@ class SearchManagerMixIn(object):
 
         vector_sql = ' || '.join(sql_instances)
         where_sql = ''
+        params = []
+
+        connection = connections[using]
+        qn = connection.ops.quote_name
 
         if pk is not None:
             if isinstance(pk, (list, tuple)):
-                where_sql = """ WHERE "%s" IN (%s)""" % \
-                    (self.model._meta.pk.column, ','.join([str(v) for v in pk]))
+                params = pk
             else:
-                where_sql = """ WHERE "%s" IN (%s)""" % \
-                    (self.model._meta.pk.column, pk)
+                params = [pk]
+            where_sql = "WHERE %s IN (%s)" % (
+                qn(self.model._meta.pk.column),
+                ','.join(repeat("%s", len(params)))
+            )
 
-        sql = """UPDATE "%s" SET "%s" = %s%s""" % \
-            (self.model._meta.db_table, self.vector_field, vector_sql, where_sql)
+        sql = "UPDATE %s SET %s = %s %s;" % (
+                qn(self.model._meta.db_table),
+                qn(self.vector_field),
+                vector_sql,
+                where_sql
+            )
 
         if not transaction.is_managed(using=using):
             transaction.enter_transaction_management(using=using)
@@ -85,9 +97,8 @@ class SearchManagerMixIn(object):
         else:
             forced_managed = False
 
-        connection = connections[using]
         cursor = connection.cursor()
-        cursor.execute(sql)
+        cursor.execute(sql, params)
         # cursor.close() # TODO: close?
 
         try:
