@@ -54,6 +54,9 @@ class SearchManagerMixIn(object):
         return sql_template % (config, qn(f.column), weight)
 
     def update_index(self, pk=None, config=None, using=None):
+        if using is None:
+            using = self.db
+
         sql_instances = []
 
         if not self.fields:
@@ -64,7 +67,7 @@ class SearchManagerMixIn(object):
 
         vector_sql = ' || '.join(sql_instances)
         where_sql = ''
-        
+
         if pk is not None:
             if isinstance(pk, (list, tuple)):
                 where_sql = """ WHERE "%s" IN (%s)""" % \
@@ -72,24 +75,34 @@ class SearchManagerMixIn(object):
             else:
                 where_sql = """ WHERE "%s" IN (%s)""" % \
                     (self.model._meta.pk.column, pk)
-        
+
         sql = """UPDATE "%s" SET "%s" = %s%s""" % \
             (self.model._meta.db_table, self.vector_field, vector_sql, where_sql)
-        
-        if using is not None:
-            connection = connections[using]
-        else:
-            connection = connections[self.db]
 
+        if not transaction.is_managed(using=using):
+            transaction.enter_transaction_management(using=using)
+            forced_managed = True
+        else:
+            forced_managed = False
+
+        connection = connections[using]
         cursor = connection.cursor()
         cursor.execute(sql)
         cursor.close()
-        transaction.commit_unless_managed()
+
+        try:
+            if forced_managed:
+                transaction.commit(using=using)
+            else:
+                transaction.commit_unless_managed(using=using)
+        finally:
+            if forced_managed:
+                transaction.leave_transaction_management(using=using)
 
     def search(self, query, rank_field=None, rank_normalization=32, config=None, raw=False):
         if not config:
             config = self.config
-        
+
         function = "plainto_tsquery" if not raw else "to_tsquery"
         ts_query = "%s('%s', unaccent('%s'))" % (function, config, force_unicode(query).replace("'","''"))
         where = """ "%s" @@ %s""" % (self.vector_field, ts_query)
