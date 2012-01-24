@@ -65,6 +65,8 @@ class FtsManager(SearchManagerMixIn, ManagerMixIn, models.Manager):
     """ Manager with postgresql full text search mixin. """
     use_for_related_fields = True
 
+
 FTSManager = FtsManager
+
 
 from .dispatch import *

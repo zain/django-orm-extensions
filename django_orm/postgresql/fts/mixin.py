@@ -65,8 +65,8 @@ class SearchManagerMixIn(object):
         if not self.fields:
             self.fields = self._find_fields()
 
-        for field, weight in self.fields:
-            sql_instances.append(self._vector_sql(field, weight, config, using))
+        sql_instances = [self._vector_sql(field, weight, config, using) \
+            for field, weight in self.fields]
 
         vector_sql = ' || '.join(sql_instances)
         where_sql = ''
@@ -80,17 +80,18 @@ class SearchManagerMixIn(object):
                 params = pk
             else:
                 params = [pk]
+
             where_sql = "WHERE %s IN (%s)" % (
                 qn(self.model._meta.pk.column),
                 ','.join(repeat("%s", len(params)))
             )
 
         sql = "UPDATE %s SET %s = %s %s;" % (
-                qn(self.model._meta.db_table),
-                qn(self.vector_field),
-                vector_sql,
-                where_sql
-            )
+            qn(self.model._meta.db_table),
+            qn(self.vector_field),
+            vector_sql,
+            where_sql
+        )
 
         if not transaction.is_managed(using=using):
             transaction.enter_transaction_management(using=using)
@@ -100,7 +101,6 @@ class SearchManagerMixIn(object):
 
         cursor = connection.cursor()
         cursor.execute(sql, params)
-        # cursor.close() # TODO: close?
 
         try:
             if forced_managed:
@@ -110,6 +110,7 @@ class SearchManagerMixIn(object):
         finally:
             if forced_managed:
                 transaction.leave_transaction_management(using=using)
+
 
     def search(self, query, rank_field=None, rank_normalization=32, config=None,
                raw=False, using=None):
