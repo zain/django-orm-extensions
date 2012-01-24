@@ -3,12 +3,12 @@ django_orm
 
 Advanced improvement to django orm with third-party modules in one with some usefull features.
 
-**Docs:** http://readthedocs.org/docs/django-orm/en/latest/
+* **Docs:** http://readthedocs.org/docs/django-orm/en/latest/
+* **Project page:** http://www.niwi.be/post/project-django-orm/
 
 Global features:
 ----------------
 
-* Builtin connection pool. (PostgreSQL, MySQL, Sqlite3)
 * Additional indexes creation method from model. (PostgreSQL, MySQL, Sqlite3)
 * ORM low level cache for all backends. (beta)
 * Unaccent lookup for searches without accents.
