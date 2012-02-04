@@ -15,7 +15,7 @@ class PoolMixIn(object):
         super(PoolMixIn, self).__init__(*args, **kwargs)
         options = self.settings_dict.get('OPTIONS', {})
         self.pool_type = options.get('POOLTYPE', POOLTYPE_PERSISTENT)
-        self.pool_enabled = options.pop('POOL_ENABLED', True)
+        self.pool_enabled = options.pop('POOL_ENABLED', False)
 
     def _try_connected(self):
         """

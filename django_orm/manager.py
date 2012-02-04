@@ -43,9 +43,13 @@ class ManagerMixIn(object):
     def contribute_to_class(self, model, name):
         if not getattr(model, '_orm_manager', None):
             model._orm_manager = self
+        
+        if hasattr(model, '_orm_meta') and \
+                    (model._orm_meta.options['cache_object'] \
+                    or model._orm_meta.options['cache_queryset']):
+            signals.post_save.connect(invalidate_object, sender=model)
+            signals.post_delete.connect(invalidate_object, sender=model)
 
-        signals.post_save.connect(invalidate_object, sender=model)
-        signals.post_delete.connect(invalidate_object, sender=model)
         super(ManagerMixIn, self).contribute_to_class(model, name)
 
     def clear_cache(self):
@@ -61,6 +65,8 @@ class FtsManager(SearchManagerMixIn, ManagerMixIn, models.Manager):
     """ Manager with postgresql full text search mixin. """
     use_for_related_fields = True
 
+
 FTSManager = FtsManager
+
 
 from .dispatch import *

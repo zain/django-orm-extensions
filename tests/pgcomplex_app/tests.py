@@ -67,7 +67,7 @@ class DoublePrecisionArrayFieldTest(TestCase):
         self.p3 = DoubleModel.objects.create(lista=[5.1,3.2,6.3,7.4])
     
     def test_double_array_contains(self):
-        qs = DoubleModel.objects.filter(lista__contains=[1.2,2.3])
+        qs = DoubleModel.objects.filter(lista__contains=1.2)
         self.assertEqual(qs.count(), 1)
 
     def test_double_array_overlap(self):
@@ -113,7 +113,7 @@ class IntArrayFieldTest(TestCase):
         self.assertEqual(qs.count(), 2)
     
     def test_int_array_contains(self):
-        qs = IntModel.objects.filter(lista__contains=[1,2,3])
+        qs = IntModel.objects.filter(lista__contains=1)
         self.assertEqual(qs.count(), 2)
 
     def test_int_array_overlap(self):
@@ -145,19 +145,21 @@ class IntArrayFieldTest(TestCase):
         result = IntModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 30)
 
+from django.db import connection
+from pprint import pprint
 
 class TextArrayFieldTest(TestCase):
     def setUp(self):
         TextModel.objects.all().delete()
-        self.p1 = TextModel.objects.create(lista=['hola', 'mundo'])
-        self.p2 = TextModel.objects.create(lista=['hellow', 'world'])
-        self.p3 = TextModel.objects.create(lista=['привет', 'моя', 'страна'])
+        self.p1 = TextModel.objects.create(lista=[u'hola', u'mundo'])
+        self.p2 = TextModel.objects.create(lista=[u'hellow', u'world'])
+        self.p3 = TextModel.objects.create(lista=[u'привет', u'моя', u'страна'])
     
     def test_text_array_contains(self):
-        qs = TextModel.objects.filter(lista__contains=['hola', 'mundo'])
+        qs = TextModel.objects.filter(lista__contains=u'mundo')
         self.assertEqual(qs.count(), 1)
 
-        qs = TextModel.objects.filter(lista__contains=[u'привет', u'моя', u'страна'])
+        qs = TextModel.objects.filter(lista__contains=u'страна')
         self.assertEqual(qs.count(), 1)
 
     def test_text_array_overlap(self):
@@ -198,10 +200,10 @@ class VarcharArrayFieldTest(TestCase):
         self.p3 = VarcharModel.objects.create(lista=['привет', 'моя', 'страна'])
     
     def test_varchar_array_contains(self):
-        qs = VarcharModel.objects.filter(lista__contains=['hola', 'mundo'])
+        qs = VarcharModel.objects.filter(lista__contains='hola')
         self.assertEqual(qs.count(), 1)
 
-        qs = VarcharModel.objects.filter(lista__contains=[u'привет', u'моя', u'страна'])
+        qs = VarcharModel.objects.filter(lista__contains=u'привет')
         self.assertEqual(qs.count(), 1)
 
     def test_varchar_array_overlap(self):
