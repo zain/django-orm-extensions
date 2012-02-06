@@ -116,7 +116,6 @@ You must ensure you have installed the extension `unaccent`:
 
 In postgresql90 sometimes does not work as we wish, we can use one like this:
 
-
 .. code-block:: sql
 
     CREATE OR REPLACE FUNCTION unaccent(text) RETURNS text AS $$ 
