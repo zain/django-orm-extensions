@@ -1,5 +1,5 @@
-Low-level orm cache (beta)
-==========================
+Low-level orm cache
+===================
 
 Implementation of low-level cache for the django orm. It integrates with all backends supported by django-orm.
 
@@ -7,7 +7,6 @@ This supports this type of cache:
 
 * Object-level cache.
 * Queryset-level cache.
-* Queryset-byid cache.
 
 The **object-level** cache consists of, maintain data in memory and invalidate this if its modification.
 It is used when making querys with method 'get'. And as a weak point, is that it requires you to use at 
@@ -138,5 +137,3 @@ Here's an example of use:
         <div class="photo">{{ photo.title }}</div>
         {% endfor %}
     {% endwithqs %}
-
-(work in progress)
