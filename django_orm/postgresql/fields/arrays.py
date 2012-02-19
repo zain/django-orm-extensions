@@ -28,6 +28,7 @@ class ArrayField(models.Field):
 
         if lookup_type in ARRAY_LOOKUPS:
             return self.get_prep_value(value)
+
         raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
@@ -35,9 +36,10 @@ class ArrayField(models.Field):
         
         if lookup_type == 'indexexact':
             return value, False
-        
-        is_list = True
+
+        is_list = False
         if isinstance(value, (list, tuple)):
+            is_list = True
             if isinstance(value[0], basestring):
                 value = u"{%s}" % (",".join(['"%s"' % x for x in value]))
             elif isinstance(value[0], (float, int, long)):
