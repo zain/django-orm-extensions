@@ -39,6 +39,9 @@ class ArrayField(models.Field):
 
         is_list = False
         if isinstance(value, (list, tuple)):
+            if len(value) == 1:
+                return value[0], False
+
             is_list = True
             if isinstance(value[0], basestring):
                 value = u"{%s}" % (",".join(['"%s"' % x for x in value]))
