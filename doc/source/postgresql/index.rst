@@ -9,7 +9,7 @@ Table of Contents:
 .. toctree::
    :maxdepth: 1
 
-   hstore/index.rst
+   hstore.rst
    server-cursors.rst
    aggregates.rst
    fts.rst

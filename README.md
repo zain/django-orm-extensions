@@ -1,10 +1,12 @@
-django_orm
+Django Orm
 ==========
 
 Advanced improvement to django orm with third-party modules in one with some usefull features.
 
-* **Docs:** http://readthedocs.org/docs/django-orm/en/latest/
+For more information, see project page and documentation:
+
 * **Project page:** http://www.niwi.be/post/project-django-orm/
+* **Docs:** http://readthedocs.org/docs/django-orm/en/latest/
 
 Global features:
 ----------------
@@ -25,16 +27,8 @@ Only PostgreSQL features:
 Requirements:
 -------------
 
-* PostgreSQL >= 9.0 (if use postgresql_psycopg2 backend)
-* Psycopg2 >= 2.4 (if use postgresql_psycopg2 backend)
-* MySQLdb (if use mysql backend)
-* Django >= 1.3
+* PostgreSQL 9.x
+* Psycopg2 
+* MySQLdb 
+* Django 
 * Sqlite3
-
-TODO
------------
-
-* Composite types of PostgreSQL (under development on devel branch)
-* Database independent index creation layer.
-* Database independent within that possible View implementation.
-* Database independent full text search syntax (that compiles to native syntax depending on the backend).

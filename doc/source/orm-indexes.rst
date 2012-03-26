@@ -27,3 +27,7 @@ Example:
                 'CREATE INDEX person_name_idx0 ON pages USING BTREE (lower(name));',
                 'CREATE INDEX person_name_idx1 ON pages USING BTREE (lower(name) varchar_pattern_ops);',
             ]
+
+
+At this point indices can only be added directly to SQL statements. Future versions are expected to add 
+shortcuts to create indices regardless of the database.

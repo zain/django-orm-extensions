@@ -1,5 +1,8 @@
-HStore introduction
-===================
+PostgreSQL HStore
+=================
+
+Hstore is a niche library which integrates the `hstore`_ extension of PostgreSQL into Django,
+assuming one is using Django 1.3+, PostgreSQL 9.0+, and Psycopg 2.4+.
 
 Limitations and notes
 ---------------------
@@ -113,4 +116,3 @@ You can also take advantage of some db-side functionality by using the manager:
 
 The hstore methods on manager pass all keyword arguments aside from ``attr`` and ``key``
 to ``.filter()``.
-

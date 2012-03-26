@@ -77,7 +77,7 @@ lookups = {
     'numpoints_lte': lambda field, param: ('# %s <= %%s' % field, [param]),
 
     'contains': lambda field, param, is_list: ('%s @> %%s' % field, [param]) \
-        if not is_list else (u'%%s = ANY(%s)' % field, [param]),
+        if is_list else (u'%%s = ANY(%s)' % field, [param]),
     'distance': lambda field, param: ('%s <-> %%s = %s' % (field, param[1]), [param[0]]),
 }
 

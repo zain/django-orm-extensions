@@ -98,6 +98,7 @@ class DoublePrecisionArrayFieldTest(TestCase):
         result = DoubleModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 12.0)
 
+
 class IntArrayFieldTest(TestCase):
     def setUp(self):
         IntModel.objects.all().delete()
@@ -114,6 +115,10 @@ class IntArrayFieldTest(TestCase):
     
     def test_int_array_contains(self):
         qs = IntModel.objects.filter(lista__contains=1)
+        self.assertEqual(qs.count(), 2)
+
+    def test_int_array_contains_list(self):
+        qs = IntModel.objects.filter(lista__contains=[1,2])
         self.assertEqual(qs.count(), 2)
 
     def test_int_array_overlap(self):
