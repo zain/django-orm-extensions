@@ -32,39 +32,42 @@ class PoolMixIn(object):
         except (psycopg2.OperationalError, psycopg2.InterfaceError):
             return False
 
-    def close(self):
+    def get_pool(self):
         global pool
-        if self.connection is None:
-            return
-        
-        if not self.pool_enabled:
-            self.connection.close()
+        if not pool:
+            poolclass = PersistentPool \
+                if self.pool_type == POOLTYPE_PERSISTENT else QueuePool
+            pool = poolclass(self.settings_dict)
+        return pool
+
+    def close(self):
+        if self.pool_enabled:
+            pool = self.get_pool()
+            if self.connection is None:
+                return
+
+            if not self.connection.closed:
+                pool.putconn(self.connection)
+
             self.connection = None
-            return
-
-        if not self.connection.closed:
-            pool.putconn(self.connection)
-
-        self.connection = None
+        else:
+            super(PoolMixIn, self).close()
 
     def _cursor(self):
         """
         Returns a unique server side cursor if they are enabled, 
         otherwise falls through to the default client side cursors.
         """
-        global pool
-        if not pool:
-            poolclass = PersistentPool \
-                if self.pool_type == POOLTYPE_PERSISTENT else QueuePool
-            pool = poolclass(self.settings_dict)
-        
-        if self.connection is None:
-            self.connection = pool.getconn()
-            if self.connection is not None and not self._try_connected():
-                self.connection = None
+        if self.pool_enabled:
+            pool = self.get_pool()
 
-        if self.connection is not None:
-            self.connection.set_client_encoding('UTF8')
-            self.connection.set_isolation_level(self.isolation_level)
+            if self.connection is None:
+                self.connection = pool.getconn()
+                if self.connection is not None and not self._try_connected():
+                    self.connection = None
+
+            if self.connection is not None:
+                self.connection.set_client_encoding('UTF8')
+                self.connection.set_isolation_level(self.isolation_level)
 
         return super(PoolMixIn, self)._cursor()
