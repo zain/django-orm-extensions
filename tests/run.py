@@ -78,6 +78,7 @@ if __name__ == '__main__':
             'tests.f_expression_testapp',
             'tests.unaccent_lookup_test_app',
             'tests.ormcache_testapp',
+            'tests.pool_app',
         ]
 
     elif "mysql" in db_driver:
