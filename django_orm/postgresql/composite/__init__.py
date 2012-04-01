@@ -1,67 +1,117 @@
 # -*- coding: utf-8 -*-
 
 from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, register_type
-from django.db import models
-from django.utils.encoding import force_unicode
+from psycopg2.extras import register_composite
 
+from django.utils.encoding import force_unicode
+from django.db import models
+from django.db import transaction
+from django.db import connection
+
+import re
 
 class ComplexTypeError(Exception):
     pass
 
+# TODO: implement using method
 
-def adapt_complex(obj):
-    return AsIs(obj._as_sql())
- 
+""" Private methods. """
 
-class CompositeTypeMeta(type):
-    def __init__(cls, name, bases, attrs):
-        super(CompositeTypeMeta, cls).__init__(name, bases, attrs)
-        
-        cls.fields = {}
+def _as_sql_fields(self):
+    return u",\n    ".join([x._as_sql() for x in \
+        [self.fields[oi] for oi in self.order]])
+    
+def _create_sql(self):
+    template = u"CREATE TYPE %s AS (\n    %s\n);"
+    return template % (
+        self.type_name(),
+        self._as_sql_fields()
+    )
+
+def _as_sql(self):
+    template = u"ROW(%s)"
+
+    lista = []
+    for item in [self.fields[oi]._value for oi in self.order]:
+        if isinstance(item, (long, int, float)):
+            lista.append(unicode(item))
+        elif isinstance(item, CompositeType):
+            lista.append(item._as_sql())
+        else:
+            lista.append("'%s'" % (unicode(item)))
+
+    return template % (
+        u", ".join(lista),
+    )
+
+
+class CompositeMeta(type):
+    def __new__(cls, name, bases, attrs):
+        if "order" not in attrs:
+            raise Exception("order parameter is mandatory")
+
+        new_class = super(CompositeMeta, cls).__new__(cls, name, bases, attrs)
+
+        if hasattr(new_class, 'abstract'):
+            del new_class.abstract
+            return new_class
+
+        new_class.fields = {}
         for key, value in attrs.iteritems():
             if isinstance(value, CompositeField):
                 setattr(value, '_name', key)
-                cls.fields[key] = value
-        
-        if "order" not in attrs:
-            raise Exception("order parameter is mandatory")
-        elif len(attrs['order']) > 0:
-            register_adapter(cls,  adapt_complex)
+                new_class.fields[key] = value
 
-        cls.type_name = classmethod(lambda x: cls.__name__.lower())
-        setattr(cls, '_as_sql_fields', classmethod(CompositeTypeMeta._as_sql_fields))
-        setattr(cls, '_as_create_sql', classmethod(CompositeTypeMeta._create_sql))
-        setattr(cls, '_as_sql', classmethod(CompositeTypeMeta._as_sql))
+        new_class.assign_dinamic_methods()
+        new_class.register_type_globaly()
+        return new_class
 
-    def _as_sql_fields(self):
-        return u",\n    ".join([x._as_sql() for x in \
-            [self.fields[oi] for oi in self.order]])
-        
-    def _create_sql(self):
+    def add_to_class(cls, name, value):
+        if hasattr(value, 'contribute_to_class'):
+            value.contribute_to_class(cls, name)
+        else:
+            setattr(cls, name, value)
+
+    def type_name(cls):
+        return cls.__name__.lower()
+
+    def assign_dinamic_methods(cls):
+        sql_fields_raw = u",\n    ".join([x._as_sql() for x in \
+            [cls.fields[oi] for oi in cls.order]])
+
         template = u"CREATE TYPE %s AS (\n    %s\n);"
-        return template % (
-            self.type_name(),
-            self._as_sql_fields()
-        )
+        create_sql_raw = template % (cls.type_name(), sql_fields_raw)
 
-    def _as_sql(self):
-        template = u"ROW(%s)"
+        # Assign staticaly generated raw sql unicode string
+        cls.add_to_class('_create_sql_raw', create_sql_raw)
+        cls.add_to_class('_create_sql', lambda self: self._create_sql_raw)
+        cls.add_to_class('_as_sql_template', u"ROW(%s)")
+        
+        def _wrapper(self):
+            items = []
+            for item in [self.fields[oi]._value for oi in self.order]:
+                if isinstance(item, (long, int, float)):
+                    items.append(unicode(item))
+                elif isinstance(item, CompositeType):
+                    items.append(item._as_sql())
+                else:
+                    items.append("'%s'" % (unicode(item)))
 
-        lista = []
-        for item in [self.fields[oi]._value for oi in self.order]:
-            if isinstance(item, (long, int, float)):
-                lista.append(unicode(item))
-            elif isinstance(item, CompositeType):
-                lista.append(item._as_sql())
-            else:
-                lista.append("'%s'" % (unicode(item)))
+            return self._as_sql_template % (u", ".join(items))
 
-        return template % (
-            u", ".join(lista),
-        )
+        cls.add_to_class('_as_sql', _wrapper)
+
+    @transaction.commit_on_success
+    def register_type_globaly(cls):
+        type_name = cls.__name__.lower()
+        cursor = connection.cursor()
+        register_composite(type_name, cursor, globally=True)
+        register_adapter(cls, lambda obj: AsIs(obj._as_sql()))
+        print "Registering %s type" % (type_name)
 
 
 class CompositeField(object):
+    """ Composite type base field. """
     _value = None
     _name = None
 
@@ -85,7 +135,10 @@ class CompositeField(object):
 
 
 class CompositeType(object):
-    __metaclass__ = CompositeTypeMeta
+    """ Composite tybe base class. """
+
+    __metaclass__ = CompositeMeta
+    abstract = True
     order = ()
 
     def __init__(self, *args, **kwargs):
@@ -137,8 +190,6 @@ class CompositeModelField(models.Field):
             return obj
         return value
 
-
-import re
 
 class C(object):
     """
