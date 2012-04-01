@@ -182,18 +182,18 @@ class GeometricMeta(type):
         register_adapter(cls, adapt_function)
         cursor = connection.cursor()
         cursor.execute(cls.sql_for_oid())
-        oid = cur.description[0][1]
+        oid = cursor.description[0][1]
         cursor.close()
         connection.close()
 
-        PGTYPE = new_type((oid,), ntype.upper(), cast_function)
+        PGTYPE = new_type((oid,), cls.type_name().upper(), cast_function)
         register_type(PGTYPE)
         cls._registed = True
 
         return instance
 
     def type_name(cls):
-        return unicode(cls.__name__)
+        return cls.__name__
 
     def sql_for_oid(cls):
         ntype = cls.type_name().lower()
