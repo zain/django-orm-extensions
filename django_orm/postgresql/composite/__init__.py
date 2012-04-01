@@ -22,6 +22,7 @@ class CompositeMeta(type):
             raise Exception("order parameter is mandatory")
 
         new_class = super(CompositeMeta, cls).__new__(cls, name, bases, attrs)
+        new_class._registred = False
 
         if hasattr(new_class, 'abstract'):
             del new_class.abstract
@@ -34,23 +35,26 @@ class CompositeMeta(type):
                 new_class.fields[key] = value
 
         new_class.assign_dinamic_methods()
-
-        with transaction.commit_manually():
-            try:
-                new_class.register_type_globaly()
-                transaction.commit()
-            except psycopg2.ProgrammingError:
-                transaction.rollback()
-
-                cursor = connection.cursor()
-                cursor.execute(new_class._create_sql_raw)
-                new_class.register_type_globaly()
-                transaction.commit()
-
         return new_class
 
-    #def __init__(cls, name, bases, attrs):
-    #    super(CompositeType, cls).__init__(cls, name, bases, attrs):
+    def __init__(cls, name, bases, attrs):
+        super(CompositeMeta, cls).__init__(name, bases, attrs)
+
+    def __call__(cls, *args, **kwargs):
+        instance = super(CompositeMeta, cls).__call___(*args, **kwargs)
+        if not cls._registred:
+            with transaction.commit_manually():
+                try:
+                    cls.register_type_globaly()
+                    transaction.commit()
+                except psycopg2.ProgrammingError:
+                    transaction.rollback()
+
+                    cursor = connection.cursor()
+                    cursor.execute(cls._create_sql_raw)
+                    cls.register_type_globaly()
+                    transaction.commit()
+
 
     def add_to_class(cls, name, value):
         if hasattr(value, 'contribute_to_class'):
