@@ -113,6 +113,8 @@ if __name__ == '__main__':
     #from django.core import management
     #management.call_command('sync_composite_types')
 
+    from django_orm import dispatch
+
     runner = DjangoTestSuiteRunner(verbosity=2, interactive=True, failfast=False)
     failures = runner.run_tests(test_args)
     sys.exit(failures)

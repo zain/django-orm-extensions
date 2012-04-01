@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from django.db.models import signals
+from django.db.utils import DatabaseError
 from django.conf import settings
+from django.utils.importlib import import_module
 
 import logging; log = logging.getLogger('orm.cache')
-
 
 DEFAULT_CACHE_TIMEOUT = getattr(settings, 'ORM_CACHE_DEFAULT_TIMEOUT', 60)
 DEFAULT_CACHE_ENABLED = getattr(settings, 'ORM_CACHE_DEFAULT_ENABLED', False)
@@ -14,6 +15,7 @@ class OrmMeta(object):
         'cache_queryset': DEFAULT_CACHE_ENABLED,
         'default_timeout': DEFAULT_CACHE_TIMEOUT,
     }
+
 
 def ensure_default_manager(sender, **kwargs):
     from django_orm.cache.utils import get_cache_key_for_pk
@@ -51,4 +53,38 @@ def ensure_default_manager(sender, **kwargs):
     sender.add_to_class('cache_key', 
         property(lambda x: x._get_cache_key_for_pk(x.__class__, x.pk)))
 
+
 signals.class_prepared.connect(ensure_default_manager)
+
+
+def load_types_for_app(app_path, connection):
+    try:
+        ct_mod = import_module(app_path + ".composite_types")
+    except ImportError:
+        return
+
+    if not hasattr(ct_mod, '__register__'):
+        return
+
+    valid_types_class = set(ct_mod.__register__)
+
+    for klass_str in valid_types_class:
+        klass = getattr(ct_mod, klass_str)
+        tname, schema = klass.__name__.lower(), 'public'
+            
+        try:
+            curs = connection.cursor()
+            curs.execute(klass._create_sql_raw)
+        except DatabaseError:
+            print "Type %s already exists on database." % (tname)
+
+
+def pre_syncdb_callback(**kwargs):
+    from django.db import connection
+    installed_apps = getattr(settings, 'INSTALLED_APPS')
+    for app in installed_apps:
+        load_types_for_app(app, connection)
+
+
+from django_orm.signals import pre_syncdb
+pre_syncdb.connect(pre_syncdb_callback)

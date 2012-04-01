@@ -16,6 +16,30 @@ class ComplexTypeError(Exception):
 
 # TODO: implement using method
 
+class CompositeField(object):
+    """ Composite type base field. """
+    _value = None
+    _name = None
+
+    def __init__(self, field_repr, coerce=None):
+        self.field_repr = field_repr
+        self.coerce = coerce
+
+    def __get__(self, instance, owner):
+        return self._value or None
+
+    def __set__(self, instance, value):
+        self._value = value
+        if self.coerce:
+            try:
+                self._value = self.coerce(self._value)
+            except Exception as e:
+                raise ComplexTypeError(str(e))
+
+    def _as_sql(self):
+        return u"%s %s" % (self._name, self.field_repr)
+
+
 class CompositeMeta(type):
     def __new__(cls, name, bases, attrs):
         if "order" not in attrs:
@@ -24,24 +48,21 @@ class CompositeMeta(type):
         new_class = super(CompositeMeta, cls).__new__(cls, name, bases, attrs)
         new_class._registred = False
 
-        if hasattr(new_class, 'abstract'):
-            del new_class.abstract
-            return new_class
-
         new_class.fields = {}
         for key, value in attrs.iteritems():
             if isinstance(value, CompositeField):
                 setattr(value, '_name', key)
                 new_class.fields[key] = value
-
-        new_class.assign_dinamic_methods()
+        
+        if new_class.fields:
+            new_class.assign_dinamic_methods()
         return new_class
 
     def __init__(cls, name, bases, attrs):
         super(CompositeMeta, cls).__init__(name, bases, attrs)
 
     def __call__(cls, *args, **kwargs):
-        instance = super(CompositeMeta, cls).__call___(*args, **kwargs)
+        instance = super(CompositeMeta, cls).__call__(*args, **kwargs)
         if not cls._registred:
             with transaction.commit_manually():
                 try:
@@ -55,6 +76,8 @@ class CompositeMeta(type):
                     cls.register_type_globaly()
                     transaction.commit()
 
+            cls._registred = True
+        return instance
 
     def add_to_class(cls, name, value):
         if hasattr(value, 'contribute_to_class'):
@@ -99,35 +122,10 @@ class CompositeMeta(type):
         print "Registering %s type" % (cls.type_name())
 
 
-class CompositeField(object):
-    """ Composite type base field. """
-    _value = None
-    _name = None
-
-    def __init__(self, field_repr, coerce=None):
-        self.field_repr = field_repr
-        self.coerce = coerce
-
-    def __get__(self, instance, owner):
-        return self._value or None
-
-    def __set__(self, instance, value):
-        self._value = value
-        if self.coerce:
-            try:
-                self._value = self.coerce(self._value)
-            except Exception as e:
-                raise ComplexTypeError(str(e))
-
-    def _as_sql(self):
-        return u"%s %s" % (self._name, self.field_repr)
-
-
 class CompositeType(object):
     """ Composite tybe base class. """
 
     __metaclass__ = CompositeMeta
-    abstract = True
     order = ()
 
     def __init__(self, *args, **kwargs):
@@ -170,11 +168,11 @@ class CompositeModelField(models.Field):
         return self.get_prep_lookup(lookup_type, value)
 
     def db_type(self, connection):
-        return self._type.type_name()
+        return self._type.__class__.type_name()
 
     def to_python(self, value):
         if value and isinstance(value, (list,tuple)):
-            obj = self._type()
+            obj = self._type.__class__()
             obj._with_wrapper(value)
             return obj
         return value
