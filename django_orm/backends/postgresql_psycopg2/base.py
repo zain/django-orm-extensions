@@ -10,8 +10,6 @@ from django_orm.backends.postgresql_psycopg2.creation import DatabaseCreation
 from django_orm.backends.postgresql_psycopg2.operations import DatabaseOperations
 from django_orm.backends.postgresql_psycopg2.pool import PoolMixIn
 
-from django_orm.signals import register_backend
-
 import psycopg2
 import uuid
 
@@ -34,7 +32,6 @@ class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
         self._register = lambda: None
         #self.creation.install_hstore_contrib()
         register_hstore(self.connection, globally=True, unicode=True)
-        register_backend.send(sender=self.__class__, connection=self)
 
     def _cursor(self):
         """
