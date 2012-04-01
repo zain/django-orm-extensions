@@ -2,6 +2,7 @@
 
 from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, register_type
 from psycopg2.extras import register_composite
+import psycopg2
 
 from django.utils.encoding import force_unicode
 from django.db import models
@@ -14,36 +15,6 @@ class ComplexTypeError(Exception):
     pass
 
 # TODO: implement using method
-
-""" Private methods. """
-
-def _as_sql_fields(self):
-    return u",\n    ".join([x._as_sql() for x in \
-        [self.fields[oi] for oi in self.order]])
-    
-def _create_sql(self):
-    template = u"CREATE TYPE %s AS (\n    %s\n);"
-    return template % (
-        self.type_name(),
-        self._as_sql_fields()
-    )
-
-def _as_sql(self):
-    template = u"ROW(%s)"
-
-    lista = []
-    for item in [self.fields[oi]._value for oi in self.order]:
-        if isinstance(item, (long, int, float)):
-            lista.append(unicode(item))
-        elif isinstance(item, CompositeType):
-            lista.append(item._as_sql())
-        else:
-            lista.append("'%s'" % (unicode(item)))
-
-    return template % (
-        u", ".join(lista),
-    )
-
 
 class CompositeMeta(type):
     def __new__(cls, name, bases, attrs):
@@ -63,8 +34,23 @@ class CompositeMeta(type):
                 new_class.fields[key] = value
 
         new_class.assign_dinamic_methods()
-        new_class.register_type_globaly()
+
+        with transaction.commit_manually():
+            try:
+                new_class.register_type_globaly()
+                transaction.commit()
+            except psycopg2.ProgrammingError:
+                transaction.rollback()
+
+                cursor = connection.cursor()
+                cursor.execute(new_class._create_sql_raw)
+                new_class.register_type_globaly()
+                transaction.commit()
+
         return new_class
+
+    #def __init__(cls, name, bases, attrs):
+    #    super(CompositeType, cls).__init__(cls, name, bases, attrs):
 
     def add_to_class(cls, name, value):
         if hasattr(value, 'contribute_to_class'):
@@ -103,11 +89,10 @@ class CompositeMeta(type):
 
     @transaction.commit_on_success
     def register_type_globaly(cls):
-        type_name = cls.__name__.lower()
         cursor = connection.cursor()
-        register_composite(type_name, cursor, globally=True)
+        register_composite(cls.type_name(), cursor, globally=True)
         register_adapter(cls, lambda obj: AsIs(obj._as_sql()))
-        print "Registering %s type" % (type_name)
+        print "Registering %s type" % (cls.type_name())
 
 
 class CompositeField(object):

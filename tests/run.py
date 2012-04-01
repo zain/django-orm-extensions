@@ -108,9 +108,11 @@ if __name__ == '__main__':
     sys.path.insert(0, current_path)
     if not settings.configured:
         settings.configure(**test_settings)
-        #from django_orm.cache.dispatch import *
 
     from django.test.simple import DjangoTestSuiteRunner
+    #from django.core import management
+    #management.call_command('sync_composite_types')
+
     runner = DjangoTestSuiteRunner(verbosity=2, interactive=True, failfast=False)
     failures = runner.run_tests(test_args)
     sys.exit(failures)
