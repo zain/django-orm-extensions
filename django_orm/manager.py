@@ -28,20 +28,27 @@ class ManagerMixIn(object):
         return SqliteQuerySet(model=self.model, using=self._db)
 
     def cache(self, *args, **kwargs):
-        """ Active cache for this queryset """
+        """ 
+        Active cache for this queryset 
+        """
         return self.get_query_set().cache(*args, **kwargs)
 
     def no_cache(self, *args, **kwargs):
-        """ Deactive cache for this queryset. """
+        """
+        Deactive cache for this queryset. 
+        """
         return self.get_query_set().no_cache(*args, **kwargs)
 
     def array_slice(self, attr, x, y, **params):
-        """ Get subarray from some array field. Only for postgresql vendor. """
+        """ 
+        Get subarray from some array field. Only for postgresql vendor. 
+        """
         return self.filter(**params).array_slice(attr, x, y)
 
     def array_length(self, attr, **params):
         """
-        Get length from some array field. Only for postgresql vendor. """
+        Get length from some array field. Only for postgresql vendor. 
+        """
         return self.filter(**params).array_length(attr)
 
     def contribute_to_class(self, model, name):
