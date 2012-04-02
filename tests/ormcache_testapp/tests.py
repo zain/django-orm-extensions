@@ -29,7 +29,7 @@ class OrmCacheTest(TestCase):
             TestModel.objects.cache().get(pk=self.ob1.id, name='A')
 
     def test_num_querys_object_cache_invalidation(self):
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(3):
             TestModel.objects.cache().get(pk=self.ob1.id)
             obj = TestModel.objects.cache().get(pk=self.ob1.id)
             obj.save()

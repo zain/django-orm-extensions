@@ -234,7 +234,6 @@ class VarcharArrayFieldTest(TestCase):
         
     def test_varchar_array_aggregates_length_sum(self):
         from django_orm.postgresql.aggregates import ArrayLength
-
         result = VarcharModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 7)
 
