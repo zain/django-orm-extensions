@@ -2,7 +2,7 @@
 
 from django.db.models.sql.query import Query
 from django_orm.postgresql.constants import QUERY_TERMS
-from django_orm.postgresql.sql import PgWhereNode
+from django_orm.postgresql.sql.where import PgWhereNode
 
 class PgQuery(Query):
     query_terms = QUERY_TERMS

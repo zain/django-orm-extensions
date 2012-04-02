@@ -9,54 +9,53 @@ from django_orm.postgresql.geometric.objects import *
 
 from .models import IntModel, TextModel, DoubleModel, VarcharModel
 from .models import ByteaModel, IntervalModel, GeomModel
-
-
 from .models import Foo2Model, FooModel, FooBigModel
 from .composite_types import Person, Account
+
 from django_orm.postgresql.composite import C
 
-class CompositeTypesSimpleTest(TestCase):
-    def setUp(self):
-        self.o1 = FooModel.objects.create(
-            person = Person(name="Andrei Antoukh", age=23)
-        )
-        self.o2 = FooModel.objects.create(
-            person = Person(name="Francisco", age=14)
-        )
-
-    def tearDown(self):
-        self.o1.delete()
-        self.o2.delete()
-
-    def test_simple_get(self):
-        p1 = FooModel.objects.get(pk=self.o1.id)
-        self.assertIsInstance(p1.person, Person)
-        self.assertEqual(p1.person.name, u"Andrei Antoukh")
-
-    def test_simple_save(self):
-        self.o1.person.name = u"Carlos"
-        self.o1.save()
-
-        p1 = FooModel.objects.get(pk=self.o1.id)
-        self.assertEqual(p1.person.name, u"Carlos")
-
-    def test_simple_query(self):
-        qs = FooModel.objects.filter(
-            person=C("(person).name = ?", u'Andrei Antoukh')
-        )
-        self.assertEqual(len(qs), 1)
-
-    def test_like_query(self):
-        qs = FooModel.objects.filter(
-            person=C("(person).name ILIKE ?", u'%andrei%')
-        )
-        self.assertEqual(len(qs), 1)
-
-    def test_unaccent_query(self):
-        qs = FooModel.objects.filter(
-            person=C(u"(person).name UNACCENT ?", u'%Andréi%')
-        )
-        self.assertEqual(len(qs), 1)
+#class CompositeTypesSimpleTest(TestCase):
+#    def setUp(self):
+#        self.o1 = FooModel.objects.create(
+#            person = Person(name="Andrei Antoukh", age=23)
+#        )
+#        self.o2 = FooModel.objects.create(
+#            person = Person(name="Francisco", age=14)
+#        )
+#
+#    def tearDown(self):
+#        self.o1.delete()
+#        self.o2.delete()
+#
+#    def test_simple_get(self):
+#        p1 = FooModel.objects.get(pk=self.o1.id)
+#        self.assertIsInstance(p1.person, Person)
+#        self.assertEqual(p1.person.name, u"Andrei Antoukh")
+#
+#    def test_simple_save(self):
+#        self.o1.person.name = u"Carlos"
+#        self.o1.save()
+#
+#        p1 = FooModel.objects.get(pk=self.o1.id)
+#        self.assertEqual(p1.person.name, u"Carlos")
+#
+#    def test_simple_query(self):
+#        qs = FooModel.objects.filter(
+#            person=C("(person).name = ?", u'Andrei Antoukh')
+#        )
+#        self.assertEqual(len(qs), 1)
+#
+#    def test_like_query(self):
+#        qs = FooModel.objects.filter(
+#            person=C("(person).name ILIKE ?", u'%andrei%')
+#        )
+#        self.assertEqual(len(qs), 1)
+#
+#    def test_unaccent_query(self):
+#        qs = FooModel.objects.filter(
+#            person=C(u"(person).name UNACCENT ?", u'%Andréi%')
+#        )
+#        self.assertEqual(len(qs), 1)
 
     
 class DoublePrecisionArrayFieldTest(TestCase):

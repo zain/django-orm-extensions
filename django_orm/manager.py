@@ -12,17 +12,20 @@ import logging; log = logging.getLogger('orm.cache')
 class ManagerMixIn(object):
     def get_query_set(self):
         connection = connections[self.db]
-        if connection.vendor == 'postgresql':
-            from django_orm.postgresql.query import PgQuerySet
-            return PgQuerySet(model=self.model, using=self._db)
-        elif connection.vendor == 'mysql':
-            from django_orm.mysql.query import MyQuerySet
-            return MyQuerySet(model=self.model, using=self._db)
-        elif connection.vendor == 'sqlite':
-            from django_orm.sqlite3.query import SqliteQuerySet
-            return SqliteQuerySet(model=self.model, using=self._db)
-        else:
-            return super(ManagerMixIn, self).get_query_set()
+        method = getattr(self, 'get_query_set_%s' % (connection.vendor), None)
+        return method() if method else super(ManagerMixIn, self).get_query_set()
+
+    def get_query_set_postgresql(self):
+        from django_orm.postgresql.queryset import PgQuerySet
+        return PgQuerySet(model=self.model, using=self._db)
+
+    def get_query_set_mysql(self):
+        from django_orm.mysql.query import MyQuerySet
+        return MyQuerySet(model=self.model, using=self._db)
+
+    def get_query_set_sqlite(self):
+        from django_orm.sqlite3.query import SqliteQuerySet
+        return SqliteQuerySet(model=self.model, using=self._db)
 
     def cache(self, *args, **kwargs):
         """ Active cache for this queryset """
@@ -37,7 +40,8 @@ class ManagerMixIn(object):
         return self.filter(**params).array_slice(attr, x, y)
 
     def array_length(self, attr, **params):
-        """Get length from some array field. Only for postgresql vendor. """
+        """
+        Get length from some array field. Only for postgresql vendor. """
         return self.filter(**params).array_length(attr)
 
     def contribute_to_class(self, model, name):
@@ -62,7 +66,9 @@ class Manager(ManagerMixIn, models.Manager):
 
 
 class FtsManager(SearchManagerMixIn, ManagerMixIn, models.Manager):
-    """ Manager with postgresql full text search mixin. """
+    """
+    Manager with postgresql full text search mixin.
+    """
     use_for_related_fields = True
 
 
