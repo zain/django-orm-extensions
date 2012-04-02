@@ -13,12 +13,31 @@ from django_orm.backends.postgresql_psycopg2.pool import PoolMixIn
 import psycopg2
 import uuid
 
+
+class DatabaseWrapperMeta(type):
+    def __call__(cls, *args, **kwargs): 
+        super_call = super(DatabaseWrapperMeta, cls).__call__
+        instance = super_call(*args, **kwargs)
+
+        from django_orm.postgresql.geometric import objects
+        for klass_name in objects.__all__:
+            klass = getattr(objects, klass_name)
+
+            if hasattr(klass, 'register_cast'):
+                print "Registering cast for %s"  % (klass.type_name())
+                klass.register_cast(instance)
+        
+        DatabaseWrapperMeta.__call__ = super_call
+        return instance
+
+
 class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
     """
     Psycopg2 database backend that allows the use 
     of server side cursors and connection poolings
     support.
     """
+    __metaclass__ = DatabaseWrapperMeta
     _pg_version = None
 
     def __init__(self, *args, **kwargs):

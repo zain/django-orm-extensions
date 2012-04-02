@@ -158,6 +158,7 @@ CAST_MAPPER = {
     'Lseg': cast_lseg,
 }
 
+
 class GeometricMeta(type):
     """
     Base meta class for all geometryc types.
@@ -169,28 +170,29 @@ class GeometricMeta(type):
 
     def __call__(cls, *args, **kwargs):
         instance = super(GeometricMeta, cls).__call__(*args, **kwargs)
-        if cls._registed:
-            return instance
 
         if cls.type_name() not in ADAPT_MAPPER:
             cls._registed = True
             return instance
 
-        adapt_function = ADAPT_MAPPER[cls.type_name()]
-        cast_function = ADAPT_MAPPER[cls.type_name()]
+        cls.register_adapter()
 
-        register_adapter(cls, adapt_function)
+        GeometricMeta.__call__ = super(GeometricMeta, cls).__call__
+        return instance
+
+    def register_cast(cls, connection):
+        cast_function = ADAPT_MAPPER[cls.type_name()]
         cursor = connection.cursor()
         cursor.execute(cls.sql_for_oid())
         oid = cursor.description[0][1]
         cursor.close()
-        connection.close()
 
         PGTYPE = new_type((oid,), cls.type_name().upper(), cast_function)
         register_type(PGTYPE)
-        cls._registed = True
 
-        return instance
+    def register_adapter(cls):
+        adapt_function = ADAPT_MAPPER[cls.type_name()]
+        register_adapter(cls, adapt_function)
 
     def type_name(cls):
         return cls.__name__
@@ -198,6 +200,7 @@ class GeometricMeta(type):
     def sql_for_oid(cls):
         ntype = cls.type_name().lower()
         return "SELECT NULL::%s" % (ntype)
+
 
 class Point(tuple):
     """ 
@@ -358,3 +361,5 @@ class Polygon(Path):
     __metaclass__ = GeometricMeta
     def __repr__(self):
         return "<Polygon(%s) closed=%s>" % (len(self), self.closed)
+
+__all__ = ['Polygon', 'Point', 'Box', 'Circle', 'Path', 'Lseg']
