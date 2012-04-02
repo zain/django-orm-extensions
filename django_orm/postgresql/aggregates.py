@@ -25,7 +25,7 @@ class Unaccent(models.Aggregate):
 class ArrayLengthAggregate(models.sql.aggregates.Aggregate):
     sql_function = 'array_length'
     sql_template = '%(function)s(%(field)s, 1)'
-    is_computed = True
+    is_ordinal = True
 
     def __init__(self, col, source=None, is_summary=True, **extra):
         self.col, self.source, self.is_summary = col, source, is_summary
