@@ -24,10 +24,10 @@ class DatabaseWrapperMeta(type):
             klass = getattr(objects, klass_name)
 
             if hasattr(klass, 'register_cast'):
-                print "Registering cast for %s"  % (klass.type_name())
                 klass.register_cast(instance)
         
         DatabaseWrapperMeta.__call__ = super_call
+        register_hstore(instance.cursor(), globally=True, unicode=True)
         return instance
 
 
@@ -47,11 +47,6 @@ class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
         self.ops = DatabaseOperations(self)
         self.creation = DatabaseCreation(self)
 
-    def _register(self):
-        self._register = lambda: None
-        #self.creation.install_hstore_contrib()
-        register_hstore(self.connection, globally=True, unicode=True)
-
     def _cursor(self):
         """
         Returns a unique server side cursor if they are enabled, 
@@ -67,7 +62,6 @@ class DatabaseWrapper(PoolMixIn, BaseDatabaseWrapper):
                 cursor.itersize = self.server_side_cursor_itersize
             cursor = CursorWrapper(cursor)
 
-        self._register()
         if not hasattr(self, '_version'):
             try:
                 from django.db.backends.postgresql.version import get_version
