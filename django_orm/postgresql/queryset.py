@@ -3,19 +3,33 @@
 from django.db.models.sql.constants import SINGLE
 from django_orm.postgresql.hstore.query import select_query, update_query
 from django_orm.cache.query import CachedQuerySet
-from django_orm.postgresql.query import PgQuery
 
+class UnaccentQuerysetMixin(object):
+    def unaccent(self, **kwargs):
+        where, params = [], []
+        for field, search_term in kwargs.items():
+            where_sql = u"unaccent(%s) LIKE unaccent(%%s)" % field
+            where.append(where_sql)
+            params.append(self._prepare_search_term(search_term))
+        return self.extra(where=where, params=params)
+    
+    def iunaccent(self, **kwargs):
+        where, params = [], []
+        for field, search_term in kwargs.items():
+            where_sql = u"lower(unaccent(%s)) LIKE lower(unaccent(%%s))" % field
+            where.append(where_sql)
+            params.append(self._prepare_search_term(search_term))
+        return self.extra(where=where, params=params)
 
-class PgQuerySet(CachedQuerySet):
+    def _prepare_search_term(self, term):
+        return u"%%%s%%" % term
+
+class PgQuerySet(UnaccentQuerysetMixin, CachedQuerySet):
     """
     Redefinition of standard queryset (with cache)
     for postgresql backend.
     """
     pass
-
-    #def __init__(self, model=None, query=None, using=None):
-    #    query = query or PgQuery(model)
-    #    super(PgQuerySet, self).__init__(model=model, query=query, using=using)
 
 
 class ArrayPgQuerySet(CachedQuerySet):

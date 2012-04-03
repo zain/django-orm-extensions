@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from django_orm.postgresql.fts.mixin import SearchManagerMixIn
+from django_orm.postgresql.fts.manager import SearchManagerMixIn
 from django_orm.postgresql.queryset import PgQuerySet
 
 class ManagerMixIn(object):
