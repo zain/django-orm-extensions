@@ -4,8 +4,6 @@ from django.db import models
 from django.utils.encoding import force_unicode
 from datetime import timedelta
 
-from django_orm.postgresql.constants import INTERVAL_LOOKUPS
-
 class IntervalField(models.Field):
     __metaclass__ = models.SubfieldBase
 
@@ -25,9 +23,7 @@ class IntervalField(models.Field):
         if hasattr(value, '_prepare'):
             return value._prepare()
 
-        if lookup_type in INTERVAL_LOOKUPS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
+        return self.get_prep_value(value)
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
         return [self.get_prep_lookup(lookup_type, value)]

@@ -50,7 +50,6 @@ class HStoreQuery(Query):
     def __init__(self, model):
         super(HStoreQuery, self).__init__(model, HStoreWhereNode)
 
-
 from django_orm.cache.query import CachedQuerySet
 
 class HStoreQuerySet(CachedQuerySet):

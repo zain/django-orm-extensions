@@ -26,10 +26,7 @@ class ArrayField(models.Field):
         if hasattr(value, '_prepare'):
             return value._prepare()
 
-        if lookup_type in ARRAY_LOOKUPS:
-            return self.get_prep_value(value)
-
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
+        return self.get_prep_value(value)
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
         value = self.get_prep_lookup(lookup_type, value)
