@@ -114,15 +114,6 @@ class CachedMixIn(object):
     def _get_queryset_from_cache(self, cache_object):
         model, keys, fields, length = cache_object
         results = self._get_objects_for_keys(model, keys)
-
-        #if fields:
-        #    # TODO: optimize this so it's only one get_many call instead of one per select_related field
-        #    # XXX: this probably isn't handling depth beyond 1, didn't test even depth of 1 yet
-        #    for f in fields:
-        #        field = model._meta.get_field(f)
-        #        field_results = dict((r.id, r) for r in  self._get_objects_for_keys(f.rel.to, [getattr(r, field.db_column) for r in results]))
-        #        for r in results:
-        #            setattr(r, f.name, field_results[getattr(r, field.db_column)])
         return results
 
     def _get_objects_for_keys(self, model, keys):
@@ -180,7 +171,9 @@ class CachedMixIn(object):
 
     
 class CachedQuerySet(CachedMixIn, QuerySet):
-    """ Main subclass of QuerySet that implements cache subsystem. """
+    """ 
+    Main subclass of QuerySet that implements cache subsystem. 
+    """
     def _fill_cache(self, num=None):
         super(CachedQuerySet, self)._fill_cache(num=num)
         if not self._iter and not self.from_cache and self.cache_queryset_enable:

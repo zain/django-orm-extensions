@@ -209,11 +209,14 @@ class Point(tuple):
     __metaclass__ = GeometricMeta
 
     def __init__(self, args):
+        print "!!!!!!!!!!!", args
         if len(args) == 2:
             super(Point, self).__init__(args)
         else: 
             raise ValueError("Max is 2 elements")
         self._validate()
+
+        print 222
 
     def _validate(self):
         if not isinstance(self.x, (int, long, float)) \

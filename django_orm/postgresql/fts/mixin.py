@@ -40,6 +40,10 @@ class SearchManagerMixIn(object):
         super(SearchManagerMixIn, self).contribute_to_class(cls, name)
 
     def _find_fields(self):
+        """
+        Search all text fields.
+        """
+
         fields = [f for f in self.model._meta.fields if isinstance(f,(models.CharField,models.TextField))]
         return [f.name for f in fields]
 

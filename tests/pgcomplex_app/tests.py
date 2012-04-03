@@ -284,6 +284,7 @@ class ByteaFieldTest(TestCase):
 class GeometricFieldsTest(TestCase):
     def setUp(self):
         GeomModel.objects.all().delete()
+        print Lseg, type(Lseg)
         self.models = [
             GeomModel.objects.create(
                 pt = Point((1,2)),

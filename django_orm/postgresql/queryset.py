@@ -11,11 +11,14 @@ class PgQuerySet(CachedQuerySet):
     Redefinition of standard queryset (with cache)
     for postgresql backend.
     """
+    pass
 
-    def __init__(self, model=None, query=None, using=None):
-        query = query or PgQuery(model)
-        super(PgQuerySet, self).__init__(model=model, query=query, using=using)
+    #def __init__(self, model=None, query=None, using=None):
+    #    query = query or PgQuery(model)
+    #    super(PgQuerySet, self).__init__(model=model, query=query, using=using)
 
+
+class ArrayPgQuerySet(CachedQuerySet):
     @select_query
     def array_slice(self, query, attr, x, y):
         query.add_extra({'_': '%s[%%s:%%s]' % attr}, [x+1, y+1], None, None, None, None)

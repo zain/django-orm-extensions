@@ -24,7 +24,7 @@ else:
 if 'DB_DRIVER' in os.environ:
     db_driver = os.environ['DB_DRIVER']
 else:
-    db_driver = 'django_orm.backends.postgresql_psycopg2'
+    db_driver = 'django.db.backends.postgresql_psycopg2'
 
 
 test_settings = {
@@ -74,11 +74,10 @@ if __name__ == '__main__':
             'tests.hstore_app',
             'tests.aggregates_unaccent_app',
             'tests.fts_app',
-            'tests.pgcomplex_app',
+            #'tests.pgcomplex_app',
             'tests.f_expression_testapp',
             'tests.unaccent_lookup_test_app',
             'tests.ormcache_testapp',
-            'tests.pool_app',
         ]
 
     elif "mysql" in db_driver:
