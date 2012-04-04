@@ -8,11 +8,18 @@ from django.conf import settings
 from django_orm.cache.exceptions import CacheMissingWarning
 from .utils import get_cache_key_for_pk, get_cache
 
+import copy
+import hashlib
+import logging
+
 
 CACHE_KEY_PREFIX = getattr(settings, 'ORM_CACHE_KEY_PREFIX', 'orm.cache')
 CACHE_FETCH_BY_ID = getattr(settings, 'ORM_CACHE_FETCH_BY_ID', False)
 DEFAULT_CACHE_TIMEOUT = getattr(settings, 'ORM_CACHE_DEFAULT_TIMEOUT', 60) 
 DEFAULT_CACHE_ENABLED = getattr(settings, 'ORM_CACHE_DEFAULT_ENABLED', False)
+
+cache = get_cache()
+log = logging.getLogger('orm.cache')
 
 
 class ObjectCacheMixIn(object):
@@ -91,7 +98,7 @@ class ObjectCacheMixIn(object):
         ckey = get_cache_key_for_pk(self.model, pk, **params)
         obj = cache.get(ckey)
         if not obj:
-            obj = super(CachedMixIn, self).get(*args, **kwargs)
+            obj = super(ObjectCacheMixIn, self).get(*args, **kwargs)
             cache.set(ckey, obj, self.cache_timeout)
             log.info("Orm cache missing: %s(%s)",
                 self.model.__name__, obj.id)
@@ -127,7 +134,7 @@ class ObjectCacheMixIn(object):
     
     def fetch_by_id(self):
         values = self.values_list('pk', *self.query.extra.keys())
-        ids = [val[0] for val in vals]
+        ids = [val[0] for val in values]
 
         keys = dict((get_cache_key_for_pk(self.model, i), i) for i in ids)
         cached = dict((k, v) for k, v in cache.get_many(keys).items() if v is not None)
