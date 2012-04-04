@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from django_orm.postgresql.fts.mixin import SearchManagerMixIn
+from django_orm.postgresql.fts.manager import SearchManagerMixIn
+from django_orm.postgresql.manager import CacheManagerMixIn
+from django_orm.postgresql.manager import ManagerMixIn
 from django.contrib.gis.db import manager
 
-class GeoManager(manager.GeoManager):
+from .queryset import GeoQuerySet
+
+class GeoManager(ManagerMixIn, CacheManagerMixIn, manager.GeoManager):
     use_for_related_fields = True
 
-class FtsGeoManager(SearchManagerMixIn, manager.GeoManager):
+    def get_query_set(self):
+        return GeoQuerySet(model=self.model, using=self._db)
+
+
+class FtsGeoManager(SearchManagerMixIn, GeoManager):
     use_for_related_fields = True
