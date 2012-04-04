@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django_orm.postgresql.fts.manager import SearchManagerMixIn
-from django_orm.postgresql.manager import CacheManagerMixIn
 from django_orm.postgresql.manager import ManagerMixIn
+from django_orm.cache.manager import CacheManagerMixIn
 from django.contrib.gis.db import manager
 
 from .queryset import GeoQuerySet
