@@ -20,15 +20,16 @@ ALWAYS_INSTALLED_APPS = ['django_orm']
 
 sys.path.insert(0, os.path.join(RUNTESTS_DIR, '..'))
 
-def get_test_modules():
+def get_test_modules(prefix):
     modules = []
     for loc, dirpath in ((MODEL_TESTS_DIR_NAME, MODEL_TEST_DIR),):
         for f in os.listdir(dirpath):
-            if (f.startswith('__init__') or
-                f.startswith('.') or
-                f.startswith('sql')):
-                continue
-            modules.append((loc, f))
+            if f.startswith(prefix) or f.startswith('both_'):
+                modules.append((loc, f))
+            #if (f.startswith('__init__') or
+            #    f.startswith('.') or
+            #    f.startswith('sql')):
+            #    continue
     return modules
 
 def setup(verbosity, test_labels):
@@ -72,7 +73,8 @@ def setup(verbosity, test_labels):
 
     # Load all the test model apps.
     test_labels_set = set([label.split('.')[0] for label in test_labels])
-    test_modules = get_test_modules()
+
+    test_modules = get_test_modules(settings.TEST_MODULE_PREFIX)
 
     for module_dir, module_name in test_modules:
         module_label = '.'.join([module_dir, module_name])

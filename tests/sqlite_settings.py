@@ -1,14 +1,9 @@
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'django_orm_test',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
     },
 }
-TEST_MODULE_PREFIX = 'pg_'
+TEST_MODULE_PREFIX = 'slt_'
 
 SECRET_KEY = "django_tests_secret_key"
 
