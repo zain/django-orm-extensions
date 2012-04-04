@@ -7,30 +7,22 @@ import sys
 import tempfile
 import warnings
 
-from django import contrib
-
-# databrowse is deprecated, but we still want to run its tests
-warnings.filterwarnings('ignore', "The Databrowse contrib app is deprecated",
-                        PendingDeprecationWarning, 'django.contrib.databrowse')
-
-CONTRIB_DIR_NAME = 'django.contrib'
 MODEL_TESTS_DIR_NAME = 'modeltests'
-REGRESSION_TESTS_DIR_NAME = 'regressiontests'
-
 TEST_TEMPLATE_DIR = 'templates'
 
 RUNTESTS_DIR = os.path.dirname(__file__)
-CONTRIB_DIR = os.path.dirname(contrib.__file__)
 MODEL_TEST_DIR = os.path.join(RUNTESTS_DIR, MODEL_TESTS_DIR_NAME)
-REGRESSION_TEST_DIR = os.path.join(RUNTESTS_DIR, REGRESSION_TESTS_DIR_NAME)
+
 TEMP_DIR = tempfile.mkdtemp(prefix='django_')
 os.environ['DJANGO_TEST_TEMP_DIR'] = TEMP_DIR
 
-ALWAYS_INSTALLED_APPS = []
+ALWAYS_INSTALLED_APPS = ['django_orm']
+
+sys.path.insert(0, os.path.join(RUNTESTS_DIR, '..'))
 
 def get_test_modules():
     modules = []
-    for loc, dirpath in ((MODEL_TESTS_DIR_NAME, MODEL_TEST_DIR),)
+    for loc, dirpath in ((MODEL_TESTS_DIR_NAME, MODEL_TEST_DIR),):
         for f in os.listdir(dirpath):
             if (f.startswith('__init__') or
                 f.startswith('.') or
@@ -64,15 +56,13 @@ def setup(verbosity, test_labels):
     settings.LOGIN_URL = '/accounts/login/'
     settings.MIDDLEWARE_CLASSES = (
         'django.contrib.sessions.middleware.SessionMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.common.CommonMiddleware',
     )
     settings.SITE_ID = 1
     # For testing comment-utils, we require the MANAGERS attribute
     # to be set, so that a test email is sent out which we catch
     # in our tests.
-    settings.MANAGERS = ("admin@djangoproject.com",)
+    settings.MANAGERS = ("niwi@niwi.be",)
 
     # Load all the ALWAYS_INSTALLED_APPS.
     # (This import statement is intentionally delayed until after we
@@ -83,13 +73,6 @@ def setup(verbosity, test_labels):
     # Load all the test model apps.
     test_labels_set = set([label.split('.')[0] for label in test_labels])
     test_modules = get_test_modules()
-
-    # If GeoDjango, then we'll want to add in the test applications
-    # that are a part of its test suite.
-    if geodjango(settings):
-        from django.contrib.gis.tests import geo_apps
-        test_modules.extend(geo_apps(runtests=True))
-        settings.INSTALLED_APPS.extend(['django.contrib.gis', 'django.contrib.sitemaps'])
 
     for module_dir, module_name in test_modules:
         module_label = '.'.join([module_dir, module_name])

@@ -2,6 +2,7 @@
 
 from django_orm.postgresql.fts.manager import SearchManagerMixIn
 from django_orm.postgresql.queryset import PgQuerySet
+from django.db import models
 
 class ManagerMixIn(object):
     """
@@ -20,7 +21,7 @@ class ManagerMixIn(object):
         return self.get_query_set().unaccent(**kwargs)
 
     def iunaccent(self, **kwargs):
-        return self.get_query_set().unaccent(**kwargs)
+        return self.get_query_set().iunaccent(**kwargs)
 
 
 class CacheManagerMixIn(object):
@@ -56,7 +57,7 @@ class CacheManagerMixIn(object):
         super(CacheManagerMixIn, self).contribute_to_class(model, name)
 
 
-class Manager(ManagerMixIn, CacheManagerMixIn, model.Manager)
+class Manager(ManagerMixIn, CacheManagerMixIn, models.Manager):
     """
     Normal user manager. With cache methods.
     Without fulltext search functionality.
@@ -89,7 +90,7 @@ class ArrayDataMixin(object):
         return self.filter(**params).array_length(attr)
 
 
-class ArrayManager(ArrayDataMixin, models.Manager):
+class ArrayManager(ArrayDataMixin, CacheManagerMixIn, models.Manager):
     """
     Django-orm base manager for use with array fields.
     """

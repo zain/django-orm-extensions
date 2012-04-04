@@ -1,9 +1,8 @@
 from django.db import models
 from django_orm.postgresql.hstore.query import HStoreQuerySet
-from django_orm.manager import Manager
+from django_orm.postgresql.manager import ManagerMixIn
 
-
-class HStoreManager(Manager):
+class HStoreManager(ManagerMixIn, models.Manager):
     """
     Object manager which enables hstore features.
     """

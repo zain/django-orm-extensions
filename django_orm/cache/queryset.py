@@ -22,7 +22,7 @@ class ObjectCacheMixIn(object):
     cache_timeout = DEFAULT_CACHE_TIMEOUT
 
     def __init__(self, *args, **kwargs):
-        super(ObjectCacheMixIn, self)__init__(*args, **kwargs)
+        super(ObjectCacheMixIn, self).__init__(*args, **kwargs)
 
         orm_meta = getattr(self.model, '_orm_meta', None)
         if not orm_meta:
@@ -150,3 +150,7 @@ class ObjectCacheMixIn(object):
             return self.fetch_by_id()
 
         return super(ObjectCacheMixIn, self).iterator()
+
+
+class CachedQuerySet(ObjectCacheMixIn, QuerySet):
+    pass

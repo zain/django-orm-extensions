@@ -20,7 +20,6 @@ class OrmMeta(object):
 def ensure_default_manager(sender, **kwargs):
     from django_orm.cache.utils import get_cache_key_for_pk
     from django_orm.cache.invalidator import invalidate_object
-    from django_orm.manager import FTSManager as Manager
     from django.db import models
 
     meta_orm_class = getattr(sender, 'OrmMeta', None)
@@ -39,9 +38,6 @@ def ensure_default_manager(sender, **kwargs):
         meta_orm_obj.options = options
     
     sender.add_to_class('_orm_meta', meta_orm_obj)
-    if not getattr(sender, '_orm_manager', None):
-        sender.add_to_class('_orm_manager', Manager())
-
     sender.add_to_class('_get_cache_key_for_pk', 
         staticmethod(lambda x,y: get_cache_key_for_pk(x, y)))
     sender.add_to_class('cache_key', 
