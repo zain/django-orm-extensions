@@ -33,12 +33,6 @@ def ensure_default_manager(sender, **kwargs):
         if 'cache_object' not in options:
             options['cache_object'] = DEFAULT_CACHE_ENABLED
         
-        if 'cache_queryset' not in options:
-            options['cache_queryset'] = DEFAULT_CACHE_ENABLED
-        
-        if options['cache_queryset']:
-            options['cache_object'] = True
-
         if 'default_timeout' not in options:
             options['default_timeout'] = DEFAULT_CACHE_TIMEOUT
 
