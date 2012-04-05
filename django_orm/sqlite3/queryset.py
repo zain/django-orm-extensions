@@ -22,10 +22,12 @@ class UnaccentQuerysetMixin(object):
     iunaccent = unaccent
 
     @ensure_sqlite_function('unaccent')
-    def filter_unaccent(self, *args, **kwargs):
+    def add_unaccent_filter(self, *args, **kwargs):
         clone = self._clone()
-        clone.query.add_q(Unaccent(*args, **kwargs))
+        statement = Unaccent(*args, **kwargs)
+        statement.add_to_query(clone.query, clone.query.used_aliases)
         return clone
+
 
 class SqliteQuerySet(UnaccentQuerysetMixin, CachedQuerySet):
     pass

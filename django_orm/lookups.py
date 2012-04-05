@@ -3,7 +3,7 @@
 from django.utils import tree
 from django.db.models.sql.datastructures import MultiJoin
 
-class BaseTree(tree.Node):
+class CommonBaseTree(tree.Node):
     """
     Encapsulates filters as objects that can then be combined logically (using
     & and |).
@@ -15,7 +15,7 @@ class BaseTree(tree.Node):
     query = None
 
     def __init__(self, *args, **kwargs):
-        super(BaseTree, self).__init__(children=list(args) + kwargs.items())
+        super(CommonBaseTree, self).__init__(children=list(args) + kwargs.items())
 
     def _combine(self, other, conn):
         if not isinstance(other, (BaseTree)): 
@@ -23,7 +23,6 @@ class BaseTree(tree.Node):
         obj = type(self)()
         obj.add(self, conn)
         obj.add(other, conn)
-        #obj.query = self.query
         return obj 
 
     def __or__(self, other):
@@ -38,10 +37,9 @@ class BaseTree(tree.Node):
         obj.negate()
         return obj 
 
-    def sql_condition(self, parts, value, qn):
-        raise NotImplemented("Can be reimplemented on subclass.")
 
-    def qn(self, name):
+class BaseTree(CommonBaseTree):
+    def sql_condition(self, parts, value, qn):
         raise NotImplemented("Can be reimplemented on subclass.")
 
     def as_sql(self, qn, connection, query):
@@ -120,17 +118,14 @@ class BaseTree(tree.Node):
                 continue
 
             key, value = child
-            parts = key.split("__")
-            if len(parts) <= 1:
+            if "__" not in key:
                 continue
 
-            opts = query.model._meta
-            alias = query.get_initial_alias()
-            allow_many = True
+            parts = key.split("__")
 
             try:
                 field, target, opts, join_list, last, extra_filters = query.setup_joins(
-                    parts, opts, alias, True, allow_many, allow_explicit_fk=True,
+                    parts, query.model._meta, query.get_initial_alias(), True, True, allow_explicit_fk=True,
                     can_reuse=None, negate=False,
                     process_extras=True)
             except MultiJoin as e:
@@ -140,7 +135,7 @@ class BaseTree(tree.Node):
         self._check_subnodes(self, query)
         query.where.add(ExtraWhereStatement(query, self), self.connector)
 
-
+    
 class ExtraWhereStatement(object):
     def __init__(self, query, node):
         self.node = node

@@ -28,12 +28,12 @@ class UnaccentComplexTest(TestCase):
         self.x_obj0 = Foo2Model.objects.create(parent=self.obj0)
 
     def test_query(self):
-        qs = FooModel.manager.all().filter_unaccent(Unaccent(name="pepe") | Unaccent(name="Vesita"))
+        qs = FooModel.manager.add_unaccent_filter(Unaccent(name="pepe") | Unaccent(name="Vesita"))
+        print qs.query
         self.assertEqual(qs.count(), 1)
 
     def test_query_2(self):
-        qs = Foo2Model.manager.all().filter_unaccent(parent__name="pepe")
-        print qs.query
+        qs = Foo2Model.manager.add_unaccent_filter(parent__name="pepe")
         self.assertEqual(qs.count(), 1)
 
     def tearDown(self):
