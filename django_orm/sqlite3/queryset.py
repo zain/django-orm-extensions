@@ -3,6 +3,8 @@
 from django_orm.cache.queryset import CachedQuerySet
 from django_orm.sqlite3.extra_functions import ensure_sqlite_function
 
+from django_orm.sqlite3.lookups import Unaccent
+
 class UnaccentQuerysetMixin(object):
     @ensure_sqlite_function('unaccent')
     def unaccent(self, **kwargs):
@@ -18,6 +20,12 @@ class UnaccentQuerysetMixin(object):
         return u"%%%s%%" % term
 
     iunaccent = unaccent
+
+    @ensure_sqlite_function('unaccent')
+    def filter_unaccent(self, *args, **kwargs):
+        clone = self._clone()
+        clone.query.add_q(Unaccent(*args, **kwargs))
+        return clone
 
 class SqliteQuerySet(UnaccentQuerysetMixin, CachedQuerySet):
     pass

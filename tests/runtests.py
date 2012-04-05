@@ -19,6 +19,7 @@ os.environ['DJANGO_TEST_TEMP_DIR'] = TEMP_DIR
 ALWAYS_INSTALLED_APPS = ['django_orm']
 
 sys.path.insert(0, os.path.join(RUNTESTS_DIR, '..'))
+sys.path.insert(0, '/home/niwi/trunk/')
 
 def get_test_modules(prefix):
     modules = []

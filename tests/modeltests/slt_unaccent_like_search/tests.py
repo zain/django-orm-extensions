@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.test import TestCase
-from .models import TestModel
+from .models import TestModel, FooModel, Foo2Model
 
 class UnaccentLikeTest(TestCase):
     def setUp(self):
@@ -18,3 +18,24 @@ class UnaccentLikeTest(TestCase):
     def test_iunaccent_method(self):
         qs = TestModel.manager.iunaccent(name=u"andrei")
         self.assertEqual(qs.count(), 1)
+
+
+from django_orm.sqlite3.lookups import Unaccent
+
+class UnaccentComplexTest(TestCase):
+    def setUp(self):
+        self.obj0 = FooModel.objects.create(name=u"pépe", desc="Fòoo Bar")
+        self.x_obj0 = Foo2Model.objects.create(parent=self.obj0)
+
+    def test_query(self):
+        qs = FooModel.manager.all().filter_unaccent(Unaccent(name="pepe") | Unaccent(name="Vesita"))
+        self.assertEqual(qs.count(), 1)
+
+    def test_query_2(self):
+        qs = Foo2Model.manager.all().filter_unaccent(parent__name="pepe")
+        print qs.query
+        self.assertEqual(qs.count(), 1)
+
+    def tearDown(self):
+        FooModel.manager.all().delete()
+        Foo2Model.manager.all().delete()
