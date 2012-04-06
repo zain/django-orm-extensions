@@ -47,14 +47,22 @@ def ensure_default_manager(sender, **kwargs):
 
 signals.class_prepared.connect(ensure_default_manager)
 
-
 class ConnectionCreateHandler(object):
     default_function = lambda x,y: None
+    single_execution_handlers = {}
+    execution_handlers = {}
 
     def __call__(self, sender, connection, **kwargs):
-        self.sender = sender
-        getattr(self, 'on_%s_connection_created' % (connection.vendor),
-            self.default_function)(connection)
+        internal_handler = getattr(self, 'on_%s_connection_created' % (connection.vendor))
+        internal_handler(connection)
+
+        if self.single_execution_handlers:
+            valid_handlers = filter(lambda v: v._vendor in ['all', connection.vendor],
+                self.single_execution_handlers.itervalues())
+
+            for valid_handler in valid_handlers:
+                del self.single_execution_handlers[valid_handler.__name__]
+                valid_handler(connection)
         
     def on_postgresql_connection_created(self, connection):
         print "Postgresql:", connection
@@ -64,6 +72,10 @@ class ConnectionCreateHandler(object):
 
     def on_sqlite_connection_created(self, connection):
         print "Sqlite3:", connection
+
+    def add_single_execution_handler(self, function, vendor='all'):
+        function._vendor = vendor
+        self.single_execution_handlers[function.__name__] = function
 
 
 on_connection_created = ConnectionCreateHandler()
