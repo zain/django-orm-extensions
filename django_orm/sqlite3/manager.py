@@ -20,6 +20,10 @@ class ManagerMixIn(object):
         return self.get_query_set().iunaccent(**kwargs)
 
     def add_unaccent_filter(self, *args, **kwargs):
+        """
+        Very experimental method.
+        """
+
         return self.get_query_set().add_unaccent_filter(*args, **kwargs)
 
 

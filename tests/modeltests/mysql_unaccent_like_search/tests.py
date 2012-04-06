@@ -20,21 +20,3 @@ class UnaccentLikeTest(TestCase):
         self.assertEqual(qs.count(), 1)
 
 
-from django_orm.sqlite3.lookups import Unaccent
-
-class UnaccentComplexTest(TestCase):
-    def setUp(self):
-        self.obj0 = FooModel.objects.create(name=u"pépe", desc="Fòoo Bar")
-        self.x_obj0 = Foo2Model.objects.create(parent=self.obj0)
-
-    def test_query(self):
-        qs = FooModel.manager.add_unaccent_filter(Unaccent(name="pepe") | Unaccent(name="Vesita"))
-        self.assertEqual(qs.count(), 1)
-
-    def test_query_2(self):
-        qs = Foo2Model.manager.add_unaccent_filter(parent__name="pepe")
-        self.assertEqual(qs.count(), 1)
-
-    def tearDown(self):
-        FooModel.manager.all().delete()
-        Foo2Model.manager.all().delete()

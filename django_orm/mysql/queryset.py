@@ -16,7 +16,7 @@ class UnaccentQuerysetMixin(object):
         for field, search_term in kwargs.items():
             where_sql = "%s LIKE _utf8 %%s COLLATE utf8_unicode_ci" % (field)
             where.append(where_sql)
-            arams.append(self._prepare_search_term(search_term))
+            params.append(self._prepare_search_term(search_term))
 
         return self.extra(where=where, params=params)
 
