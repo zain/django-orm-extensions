@@ -2,14 +2,6 @@
 
 from django_orm.cache.queryset import CachedQuerySet
 
-#        if db_type.startswith('varchar'):
-#            if lookup_type in ('unaccent', 'iunaccent'):
-#                return ("%s LIKE _utf8 %%s COLLATE utf8_unicode_ci" % field_sql, [params])
-#            else:
-#                return super(MyWhereNode, self).make_atom(child, qn, connection)
-#        return super(MyWhereNode, self).make_atom(child, qn, connection)
-
-
 class UnaccentQuerysetMixin(object):
     def unaccent(self, **kwargs):
         where, params = [], []
