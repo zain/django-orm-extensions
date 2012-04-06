@@ -44,7 +44,9 @@ class SearchManagerMixIn(object):
         Search all text fields.
         """
 
-        fields = [f for f in self.model._meta.fields if isinstance(f,(models.CharField,models.TextField))]
+        fields = [f for f in self.model._meta.fields 
+            if isinstance(f,(models.CharField,models.TextField))]
+
         return [f.name for f in fields]
 
     def _vector_sql(self, field, weight=None, config=None, using=None):
@@ -146,5 +148,4 @@ class SearchManagerMixIn(object):
         if using is not None:
             qs = qs.using(using)
 
-        # TODO: use parametrized queries
         return qs.extra(select=select_dict, where=[where], order_by=order)

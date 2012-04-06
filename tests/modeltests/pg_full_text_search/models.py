@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from django_orm.postgresql.fts.fields import VectorField
-from django_orm.manager import FTSManager
+from django_orm.postgresql.fulltext.fields import VectorField
+from django_orm.postgresql.manager import FtsManager
 
 class Person(models.Model):
     name = models.CharField(max_length=32)
     description = models.TextField()
     search_index = VectorField()
 
-    objects = FTSManager(
+    objects = FtsManager(
         fields=('name', 'description'),
         search_field = 'search_index',
     )
@@ -28,7 +28,7 @@ class Person2(models.Model):
     description = models.TextField()
     search_index = VectorField()
 
-    objects = FTSManager(
+    objects = FtsManager(
         fields=('name', 'description'),
         search_field = 'search_index',
     )
@@ -42,7 +42,7 @@ class Person3(models.Model):
     description = models.TextField()
     search_index = VectorField()
 
-    objects = FTSManager(
+    objects = FtsManager(
         fields=('name', 'description'),
         search_field = 'search_index',
         auto_update_index = True,
