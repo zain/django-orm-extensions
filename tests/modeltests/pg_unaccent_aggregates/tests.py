@@ -16,7 +16,7 @@ class TestUnaccent(TestCase):
         self.p2.delete()
     
     def test_annotate(self):
-        qs = Person.objects.annotate(name_unaccent=Unaccent('name')).order_by('id')
+        qs = Person.manager.inline_annotate(name_unaccent=Unaccent('name'))
         qs = list(qs)
         self.assertEqual(qs[0].name_unaccent, 'Andrei')
         self.assertEqual(qs[1].name_unaccent, 'Pepa')

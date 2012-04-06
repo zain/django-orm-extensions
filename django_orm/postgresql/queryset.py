@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from django.db.models.sql.constants import SINGLE
+from django.utils.datastructures import SortedDict
 from django_orm.postgresql.hstore.query import select_query, update_query
 from django_orm.cache.queryset import CachedQuerySet
+from django_orm.queryset import AggragateMixIn
 
 class UnaccentQuerysetMixin(object):
     def unaccent(self, **kwargs):
@@ -24,12 +26,17 @@ class UnaccentQuerysetMixin(object):
     def _prepare_search_term(self, term):
         return u"%%%s%%" % term
 
-class PgQuerySet(UnaccentQuerysetMixin, CachedQuerySet):
+
+class PgQuerySet(AggragateMixIn, UnaccentQuerysetMixin, CachedQuerySet):
     """
     Redefinition of standard queryset (with cache)
     for postgresql backend.
     """
-    pass
+
+    def quote_name(self, name):
+        if name.startswith('"') and name.endswith('"'):
+            return name # Quoting once is enough.
+        return '"%s"' % name
 
 
 class ArrayPgQuerySet(CachedQuerySet):

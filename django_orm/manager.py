@@ -14,3 +14,6 @@ class ManagerMixIn(object):
 
     def iunaccent(self, **kwargs):
         return self.get_query_set().iunaccent(**kwargs)
+
+    def inline_annotate(self, **kwargs):
+        return self.get_query_set().inline_annotate(**kwargs)
