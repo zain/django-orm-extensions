@@ -3,16 +3,13 @@ Low-level orm cache
 
 Implementation of low-level cache for the django orm. It integrates with all backends supported by django-orm.
 
-This supports this type of cache:
-
-* Object-level cache.
-* Queryset-level cache.
+This supports only object level cache.
 
 The **object-level** cache consists of, maintain data in memory and invalidate this if its modification.
 It is used when making querys with method 'get'. And as a weak point, is that it requires you to use at 
 least search by id or pk.
 
-The **queryset-level** cache keep in memory all the queryset with all the objects it contains.
+The **queryset-level** cache keep in memory all the queryset with all the objects it contains. (**this is not implemented**)
 
 The disadvantages:
 
@@ -27,10 +24,6 @@ Use two queries: first, to get the ids and the second, for the objects. In this 
 In postgresql, the query is done with database-level cursors, which gives you the advantage of not 
 using a lot of memory to store the list of ids! 
 
-You can cache the first query with a `True` parameter on `byid` modifier. 
-(Example: ``YourModel.objects.all().byid(True)``)
-
-
 How to use this cache system?
 -----------------------------
 
@@ -42,11 +35,13 @@ To use the cache or other characteristic of ``django-orm`` must explicitly use t
 There are also other global confuguraciones our settings can be defined but defined later.
 
 
+**NOTE**: All examples are for postgresql, but this feature is available for mysql and sqlite3 as well.
+
 Simple example of model
 ^^^^^^^^^^^^^^^^^^^^^^^
 .. code-block:: python
 
-    from django_orm.manager import Manager
+    from django_orm.postgresql.manager import Manager
 
     class TestModel(models.Model):
         name = models.CharField(max_length=200)
@@ -55,7 +50,6 @@ Simple example of model
         class OrmMeta:
             options = {
                 'cache_object': True,   # enable object cache
-                'cache_queryset': True, # enable queryset cache
                 'default_timeout': 200, # in seconds
             }
 
@@ -84,12 +78,8 @@ specify the timeout.
 
 This parameter can disable the cache for a queryset.
 
-``byid(cache_qs=False)``
+``byid()``
 ^^^^^^^^^^^^^^^^^^^^^^^^
-
-This parameter enables the use of another method to get the data, taking better advantage of 
-cache object, without caching the whole queryset. This will make 2 querys, one to get the ids and then another to obtain 
-the objects. In this way we use object cache is very fast and very simple to administer.
 
 This parameter enables the use of another method to get the data, taking better advantage of cache object, 
 without caching the whole queryset.
@@ -97,8 +87,6 @@ without caching the whole queryset.
 This will make 2 querys, one to get the ids and then another to obtain the objects.
 In this way we use object cache is very fast and very simple to administer.
 
-You can query the first cache as well, going as the first parameter to True. Consider that this has no 
-effect postgresql because it uses database-level cursors.
 
 Usage examples:
 ^^^^^^^^^^^^^^^

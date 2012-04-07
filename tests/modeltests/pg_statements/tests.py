@@ -31,5 +31,5 @@ class StatementsTests(TestCase):
             sql_function = "bit_length"
 
         obj = Person.objects.create(name="jose")
-        queryset = Person.objects.inline_statement(AND(BitLengthStatement("name", "=", 32)))
+        queryset = Person.objects.where(BitLengthStatement("name", "=", 32))
         self.assertEqual(queryset.count(), 1)

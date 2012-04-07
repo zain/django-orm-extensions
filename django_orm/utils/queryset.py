@@ -43,9 +43,12 @@ class StatementMixIn(object):
         clone.query.add_extra(extra_select, params, None, None, None, None)
         return clone
 
-    def inline_statement(self, statement):
+    def where(self, *args):
         clone = self._clone()
-        _sql, _params = statement.as_sql(self.quote_name, clone)
-        clone.query.where.add(ExtraWhere([_sql.to_str()], _params), "AND")
+        for statement in args:
+            _sql, _params = statement.as_sql(self.quote_name, clone)
+            if hasattr(_sql, 'to_str'):
+                _sql = _sql.to_str()
+            clone.query.where.add(ExtraWhere([_sql], _params), "AND")
         return clone
 

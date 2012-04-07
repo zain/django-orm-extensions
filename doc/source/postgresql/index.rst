@@ -13,5 +13,6 @@ Table of Contents:
    server-cursors.rst
    aggregates.rst
    fts.rst
-   fields/index.rst
+
+.. fields/index.rst
 

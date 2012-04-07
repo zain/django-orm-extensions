@@ -18,5 +18,5 @@ class ManagerMixIn(object):
     def inline_annotate(self, **kwargs):
         return self.get_query_set().inline_annotate(**kwargs)
 
-    def inline_statement(self, *args, **kwargs):
-        return self.get_query_set().inline_statement(*args, **kwargs)
+    def where(self, *args):
+        return self.get_query_set().where(*args)

@@ -9,7 +9,7 @@ class HstoreSlice(AggregateNode):
     Usage example::
         
         queryset = SomeModel.objects\
-            .inline_annotate(HstoreSlice("data", ['v']))
+            .inline_annotate(sliced=HstoreSlice("data", ['v']))
     """
 
     sql_template = '%(function)s(%(field)s, %%s)'

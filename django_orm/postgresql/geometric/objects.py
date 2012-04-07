@@ -216,7 +216,6 @@ class Point(tuple):
             raise ValueError("Max is 2 elements")
         self._validate()
 
-        print 222
 
     def _validate(self):
         if not isinstance(self.x, (int, long, float)) \

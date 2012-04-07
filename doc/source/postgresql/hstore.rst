@@ -7,10 +7,6 @@ assuming one is using Django 1.3+, PostgreSQL 9.0+, and Psycopg 2.4+.
 Limitations and notes
 ---------------------
 
-- Due to how Django implements its ORM, you will need to use the custom ``postgresql_psycopg2`` backend
-  defined in this package, which naturally will prevent you from dropping in other django extensions
-  which require a custom backend (unless you fork and combine).
-  Within my means, I will look to integrate into this package, interesting extensions. The proposals are always welcome.
 - PostgreSQL's implementation of hstore has no concept of type; it stores a mapping of string keys to
   string values. This library makes no attempt to coerce keys or values to strings.
 
@@ -20,6 +16,7 @@ Note to postgresql 9.0 users:
 
 If using postgresql9.0 must manually install the extension hstore to create the database 
 or make hstore already installed in the corresponding template. For an example, you can see the file "runtests-pg90".
+
 
 Note to South users:
 ^^^^^^^^^^^^^^^^^^^^
@@ -79,19 +76,22 @@ You then treat the ``data`` field as simply a dictionary of string pairs:
 
 You can issue indexed queries against hstore fields:
 
+
 .. code-block:: python
+
+    from django_orm.postgresql.hstore import HstoreStatement as HS
 
     # equivalence
     Something.objects.filter(data={'a': '1', 'b': '2'})
 
     # subset by key/value mapping
-    Something.objects.filter(data__contains={'a': '1'})
+    Something.objects.where(HS("data").contains({'a':'1'}))
 
     # subset by list of keys
-    Something.objects.filter(data__contains=['a', 'b'])
+    Something.objects.where(HS("data").contains(['a', 'b']))
 
     # subset by single key
-    Something.objects.filter(data__contains='a')
+    Something.objects.where(HS("data").contains("a"))
 
 
 You can also take advantage of some db-side functionality by using the manager:
@@ -99,20 +99,45 @@ You can also take advantage of some db-side functionality by using the manager:
 .. code-block:: python
 
     # identify the keys present in an hstore field
-    >>> Something.objects.hkeys(id=instance.id, attr='data')
+    >>> Something.objects.filter(id=1).hkeys(attr='data')
     ['a', 'b']
 
     # peek at a a named value within an hstore field
-    >>> Something.objects.hpeek(id=instance.id, attr='data', key='a')
-    '1'
-
-    # do the same, after filter
-    >>> Something.objects.filter(id=instance.id).hpeek(attr='data', key='a')
+    >>> Something.objects.filter(id=1).hpeek(attr='data', key='a')
     '1'
 
     # remove a key/value pair from an hstore field
     >>> Something.objects.filter(name='something').hremove('data', 'b')
 
 
-The hstore methods on manager pass all keyword arguments aside from ``attr`` and ``key``
-to ``.filter()``.
+In addition to filters and specific methods to retrieve keys or hstore field values, 
+we can also use annotations, and then we can filter for them.
+
+.. code-block:: python
+
+    from django_orm.postgresql.hstore.aggregates import HstoreSlice, HstorePeek, HstoreKeysç
+
+    queryset = SomeModel.objects\
+        .inline_annotate(sliced=HstoreSlice("hstorefield", ['v']))
+
+    queryset = SomeModel.objects\
+        .inline_annotate(peeked=HstorePeek("hstorefield", "v"))
+
+    queryset = SomeModel.objects\
+        .inline_annotate(keys=HstoreKeys("hstorefield"))
+
+
+One advanced query example:
+
+.. code-block:: python
+
+    from django_orm.utils.statements import Statement
+
+    # define custom statement for filter, subclassing ``Statement``.
+
+    class BitLengthStatement(Statement):
+        sql_function = "bit_length"
+
+    queryset = SomeModel.objects\
+        .inline_annotate(peeked=HstorePeek("hstorefield", "v"))\
+        .where(BitLengthStatement("peeked", "=", 32))

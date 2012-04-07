@@ -12,7 +12,7 @@ similarity as the frequency of query words in the document. (`From postgresql do
 Currently these classes are implemented:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`django_orm.postgresql.fts.fields.VectorField`
+`django_orm.postgresql.fulltext.fields.VectorField`
     An tsvector index field which stores converted text into special format.
 
 `django_orm.manager.FtsManager`
@@ -47,6 +47,7 @@ To use it, you will need to add a new field and modifying one or the other metho
             if hasattr(self, '_orm_manager'):
                 self._orm_manager.update_index(pk=self.pk)
 
+
 The manager automatically injected, the method ``update_index`` to the model instance. 
 Also, not to override the save method, you can pass the parameter ``auto_update_index = True``, so 
 the index is updated automatically by calling the ``save`` method.
@@ -68,39 +69,7 @@ To search, use the ``search`` method of the manager. The current version, the me
     >>> Page.objects.search("about | documentation | django | home", raw=True)
     [<Page: Page: Home page>, <Page: Page: About>, <Page: Page: Navigation>]
 
-You can also use the lookup query on the index field for more advanced searches:
-
-.. code-block:: python
-
-    >>> Page.objects.filter(search_index__query_raw='Ruby | python')
-    [<Page: Page object>, <Page: Page object>]
-    >>> Page.objects.filter(search_index__query_raw='Ruby | python', name__iunaccent='Ruby')
-    [<Page: Page object>]
-    >>> Page.objects.filter(search_index__query_raw=('Ruby | python', 'pg_catalog.spanish'))
-    [<Page: Page object>, <Page: Page object>]
-
-
-This generates these SQL statements:
-
-.. code-block:: sql
-
-    SELECT "page"."id", "page"."name", "page"."desc", "page"."search_index" 
-    FROM "page" 
-    WHERE "page"."search_index" @@ to_tsquery('pg_catalog.english', unaccent('Ruby | python')) LIMIT 21;
-
-    SELECT "page"."id", "page"."name", "page"."desc", "page"."search_index" 
-    FROM "page" 
-    WHERE ("page"."search_index" @@ to_tsquery('pg_catalog.english', unaccent('Ruby | python')) 
-        AND lower(unaccent("page"."name")) LIKE lower(unaccent('%Ruby%'))) LIMIT 21;
-
-    SELECT "page"."id", "page"."name", "page"."desc", "page"."search_index" 
-    FROM "page" 
-    WHERE "page"."search_index" @@ to_tsquery('pg_catalog.spanish', unaccent('Ruby | python')) LIMIT 21;
-
-
 FTS extension by default uses plainto_tsquery instead of to_tosquery, for this reason the use of raw parameter. 
-There are 2 lookups, ``query`` and ``query_raw``: the second is used to do research with tsquery built by us and 
-the first one uses the function ``plainto_tsquery``.
 
 
 General notes:
