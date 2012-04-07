@@ -58,25 +58,3 @@ class HStoreQuerySet(PgQuerySet):
         field, model, direct, m2m = self.model._meta.get_field_by_name(attr)
         query.add_update_fields([(field, None, value)])
         return query
-
-
-#            if lookup_type == 'exact':
-#                if isinstance(param, dict):
-#                    return ('%s = %%s' % field, [param])
-#                else:
-#                    raise ValueError('invalid value')
-#            elif lookup_type == 'contains':
-#                if isinstance(param, dict):
-#                    return ('%s @> %%s' % field, [param])
-#                elif isinstance(param, (list, tuple)):
-#                    if param:
-#                        return ('%s ?& %%s' % field, [param])
-#                    else:
-#                        raise ValueError('invalid value')
-#                elif isinstance(param, basestring):
-#                    return ('%s ? %%s' % field, [param])
-#                else:
-#                    raise ValueError('invalid value')
-#            else:
-#                raise TypeError('invalid lookup type')
-#        return super(HStoreWhereNode, self).make_atom(child, qn, connection)
