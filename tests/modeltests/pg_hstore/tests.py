@@ -103,12 +103,27 @@ class TestDictionaryField(TestCase):
         instance = DataBag.objects.filter(id=beta.id)
         self.assertEqual(instance.hkeys('data'), ['v', 'v2'])
 
+    def test_hkeys_annotation(self):
+        alpha, beta = self._create_bags()
+        from django_orm.postgresql.hstore.aggregates import HstoreKeys
+        queryset = DataBag.objects.inline_annotate(keys=HstoreKeys("data"))
+        self.assertEqual(queryset[0].keys, ['v', 'v2'])
+        self.assertEqual(queryset[1].keys, ['v', 'v2'])
+        
     def test_hpeek(self):
         alpha, beta = self._create_bags()
     
-        instance = DataBag.objects.filter(id=alpha.id)
-        self.assertEqual(instance.hpeek(attr='data', key='v'), '1')
-        self.assertEqual(instance.hpeek(attr='data', key='invalid'), None)
+        queryset = DataBag.objects.filter(id=alpha.id)
+        self.assertEqual(queryset.hpeek(attr='data', key='v'), '1')
+        self.assertEqual(queryset.hpeek(attr='data', key='invalid'), None)
+
+    def test_hpeek_annotation(self):
+        alpha, beta = self._create_bags()
+
+        from django_orm.postgresql.hstore.aggregates import HstorePeek
+        queryset = DataBag.objects.inline_annotate(peeked=HstorePeek("data", "v"))
+        self.assertEqual(queryset[0].peeked, "1")
+        self.assertEqual(queryset[1].peeked, "2")
 
     def test_hremove(self):
         alpha, beta = self._create_bags()
@@ -133,6 +148,13 @@ class TestDictionaryField(TestCase):
         queryset = DataBag.objects.filter(id=alpha.id)
         self.assertEqual(queryset.hslice(attr='data', keys=['v']), {'v': '1'})
         self.assertEqual(queryset.hslice(attr='data', keys=['invalid']), {})
+
+    def test_hslice_annotation(self):
+        alpha, beta = self._create_bags()
+        from django_orm.postgresql.hstore.aggregates import HstoreSlice
+        queryset = DataBag.objects.inline_annotate(sliced=HstoreSlice("data", ['v']))
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(queryset[0].sliced, {'v': '1'})
 
     def test_hupdate(self):
         alpha, beta = self._create_bags()

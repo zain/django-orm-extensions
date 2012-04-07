@@ -3,10 +3,10 @@
 from django.db.models.sql.constants import SINGLE
 from django.db.models.query_utils import QueryWrapper
 
-from django_orm.cache.queryset import CachedQuerySet
+from django_orm.postgresql.queryset import PgQuerySet
 from django_orm.postgresql.hstore.query_utils import select_query, update_query
 
-class HStoreQuerySet(CachedQuerySet):
+class HStoreQuerySet(PgQuerySet):
     @select_query
     def hkeys(self, query, attr):
         """
