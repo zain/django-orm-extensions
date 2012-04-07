@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from django.utils.datastructures import SortedDict
+from django.db.models.sql.where import ExtraWhere
 
-class AggragateMixIn(object):
+class StatementMixIn(object):
     def _setup_joins_for_fields(self, parts, node, query):
         parts_num = len(parts)
 
@@ -28,6 +29,7 @@ class AggragateMixIn(object):
         node.field = (parts[-2], parts[-1])
 
     def inline_annotate(self, **kwargs):
+        # TODO: add order_by param.
         extra_select, params = SortedDict(), []
         clone = self._clone()
 
@@ -40,3 +42,10 @@ class AggragateMixIn(object):
 
         clone.query.add_extra(extra_select, params, None, None, None, None)
         return clone
+
+    def inline_statement(self, statement):
+        clone = self._clone()
+        _sql, _params = statement.as_sql(self.quote_name, clone)
+        clone.query.where.add(ExtraWhere([_sql.to_str()], _params), "AND")
+        return clone
+

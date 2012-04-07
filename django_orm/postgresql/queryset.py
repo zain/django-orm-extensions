@@ -3,7 +3,7 @@
 from django.db.models.sql.constants import SINGLE
 from django.utils.datastructures import SortedDict
 from django_orm.cache.queryset import CachedQuerySet
-from django_orm.utils.queryset import AggragateMixIn
+from django_orm.utils.queryset import StatementMixIn
 
 class UnaccentQuerysetMixin(object):
     def unaccent(self, **kwargs):
@@ -26,7 +26,7 @@ class UnaccentQuerysetMixin(object):
         return u"%%%s%%" % term
 
 
-class PgQuerySet(AggragateMixIn, UnaccentQuerysetMixin, CachedQuerySet):
+class PgQuerySet(StatementMixIn, UnaccentQuerysetMixin, CachedQuerySet):
     """
     Redefinition of standard queryset (with cache)
     for postgresql backend.

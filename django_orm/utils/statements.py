@@ -59,15 +59,38 @@ class RawSQL(object):
 
 
 class OperatorTree(CommonBaseTree):
-    def as_sql(self, qn, query=None):
-        if query is None:
-            query = self.query
+    def _setup_joins_for_fields(self, parts, node, queryset):
+        parts_num = len(parts)
+        
+        if parts_num == 0:
+            return
+        
+        if parts_num == 1:
+            node.field = (queryset.model._meta.db_table, parts[0])
+            return
+        
+        field, source, opts, join_list, last, _ = queryset.query.setup_joins(
+            parts, self.model._meta, query.get_initial_alias(), False)
+        
+        # Process the join chain to see if it can be trimmed
+        col, _, join_list = queryset.query.trim_joins(source, join_list, last, False)
+        
+        # If the aggregate references a model or field that requires a join,
+        # those joins must be LEFT OUTER - empty join rows must be returned
+        # in order for zeros to be returned for those aggregates.
+        for column_alias in join_list:
+            queryset.query.promote_alias(column_alias, unconditional=True)
+        
+        node.field = (parts[-2], parts[-1])
 
-        items = []
-        params = []
+    def as_sql(self, qn, queryset):
+        items, params = [], []
 
         for child in self.children:
-            _sql, _params = child.as_sql(qn, query)
+            if not isinstance(child, OperatorTree):
+                self._setup_joins_for_fields(child.field_parts, child, queryset)
+                
+            _sql, _params = child.as_sql(qn, queryset)
 
             if isinstance(_sql, RawSQL):
                 _sql = _sql.to_str(True)
@@ -75,7 +98,7 @@ class OperatorTree(CommonBaseTree):
             items.extend([_sql])
             params.extend(_params)
 
-        sql_obj = RawSQL(items, self._connector, query)
+        sql_obj = RawSQL(items, self._connector, queryset)
         return sql_obj, params
 
 
@@ -88,12 +111,56 @@ class OR(OperatorTree):
 
 
 class RawStatement(object):
+    field_parts = []
+
     def __init__(self, sqlstatement, *args):
         self.statement = sqlstatement
         self.params = args
 
-    def as_sql(self, qn, connection):
+    def as_sql(self, qn, query):
         return self.statement, self.params
+
+
+class Statement(object):
+    sql_template = '%(function)s(%(field)s) %(operator)s %%s'
+    sql_function = None
+    sql_operator = None
+
+    @property
+    def field_parts(self):
+        return self.field.split("__")
+
+    def __init__(self, field, operator, *args, **extra):
+        self.field = field
+        self.sql_operator = operator
+        self.args = args
+        self.extra = extra
+    
+    def as_sql(self, qn, query=None):
+        """
+        Return the statement rendered as sql.
+        """
+
+        params = {}
+        if self.sql_function is not None:
+            params['function'] = self.sql_function
+
+        if self.sql_operator is not None:
+            params['operator'] = self.sql_operator
+
+        if isinstance(self.field, basestring):
+            params['field'] = qn(self.field)
+        elif isinstance(self.field, (tuple, list)):
+            _tbl, _fld = self.field
+            params['field'] = "%s.%s" % (qn(_tbl), qn(_fld))
+        else:
+            raise ValueError("Invalid field value")
+
+        params.update(self.extra)
+
+        print self.sql_template
+        print params
+        return self.sql_template % params, self.args
 
 
 class BaseTree(CommonBaseTree):
