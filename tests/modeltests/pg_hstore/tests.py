@@ -106,7 +106,7 @@ class TestDictionaryField(TestCase):
     def test_hkeys_annotation(self):
         alpha, beta = self._create_bags()
         from django_orm.postgresql.hstore.aggregates import HstoreKeys
-        queryset = DataBag.objects.inline_annotate(keys=HstoreKeys("data"))
+        queryset = DataBag.objects.inline_annotate(keys=HstoreKeys("data").as_aggregate())
         self.assertEqual(queryset[0].keys, ['v', 'v2'])
         self.assertEqual(queryset[1].keys, ['v', 'v2'])
         
@@ -121,7 +121,7 @@ class TestDictionaryField(TestCase):
         alpha, beta = self._create_bags()
 
         from django_orm.postgresql.hstore.aggregates import HstorePeek
-        queryset = DataBag.objects.inline_annotate(peeked=HstorePeek("data", "v"))
+        queryset = DataBag.objects.inline_annotate(peeked=HstorePeek("data").as_aggregate("v"))
         self.assertEqual(queryset[0].peeked, "1")
         self.assertEqual(queryset[1].peeked, "2")
 
@@ -152,9 +152,15 @@ class TestDictionaryField(TestCase):
     def test_hslice_annotation(self):
         alpha, beta = self._create_bags()
         from django_orm.postgresql.hstore.aggregates import HstoreSlice
-        queryset = DataBag.objects.inline_annotate(sliced=HstoreSlice("data", ['v']))
+        queryset = DataBag.objects.inline_annotate(sliced=HstoreSlice("data").as_aggregate(['v']))
+
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].sliced, {'v': '1'})
+
+        queryset = DataBag.objects\
+            .where(HstoreSlice("data", ['v']).as_statement("=", {'v': '1'}))
+
+        self.assertEqual(len(queryset), 1)
 
     def test_hupdate(self):
         alpha, beta = self._create_bags()

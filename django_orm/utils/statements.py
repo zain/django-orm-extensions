@@ -12,10 +12,9 @@ def _setup_joins_for_fields(parts, node, queryset):
     
     if parts_num == 1:
         node.field = (queryset.model._meta.db_table, parts[0])
-        return
     
     field, source, opts, join_list, last, _ = queryset.query.setup_joins(
-        parts, queryset.model._meta, query.get_initial_alias(), False)
+        parts, queryset.model._meta, queryset.query.get_initial_alias(), False)
     
     # Process the join chain to see if it can be trimmed
     col, _, join_list = queryset.query.trim_joins(source, join_list, last, False)
@@ -29,22 +28,23 @@ def _setup_joins_for_fields(parts, node, queryset):
     # this works for one level of depth
     #lookup_model = self.query.model._meta.get_field(parts[-2]).rel.to
     #lookup_field = lookup_model._meta.get_field(parts[-1])
-
-    lookup_model = queryset.model
-    for counter, field_name in enumerate(parts):
-        try:
-            lookup_field = lookup_model._meta.get_field(field_name)
-        except FieldDoesNotExist:
-            parts.pop()
-            break
+    
+    if parts_num >= 2:
+        lookup_model = queryset.model
+        for counter, field_name in enumerate(parts):
+            try:
+                lookup_field = lookup_model._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                parts.pop()
+                break
+            
+            try:
+                lookup_model = lookup_field.rel.to
+            except AttributeError:
+                parts.pop()
+                break
         
-        try:
-            lookup_model = lookup_field.rel.to
-        except AttributeError:
-            parts.pop()
-            break
-
-    node.field = (lookup_model._meta.db_table, lookup_field.attname)
+        node.field = (lookup_model._meta.db_table, lookup_field.attname)
 
 
 class CommonBaseTree(tree.Node):
@@ -142,8 +142,11 @@ class RawStatement(object):
 
 
 class Statement(object):
+    """
+    Base class for all statements and aggregates.
+    """
+
     sql_template = "%(function)s(%(field)s)"
-    stmt_template = "%(function)s(%(field)s) %(op)s %%s"
     use_template = 'sql_template'
 
     sql_function = None
@@ -155,8 +158,9 @@ class Statement(object):
     def field_parts(self):
         return self.field.split("__")
 
-    def __init__(self, field):
+    def __init__(self, field, *args):
         self.field = field
+        self.args = list(args)
     
     def as_sql(self, qn, queryset):
         """
@@ -183,19 +187,24 @@ class Statement(object):
             raise ValueError("Invalid field value")
 
         params.update(self.extra)
-
+        
         template = getattr(self, self.use_template)
         return template % params, self.args
 
     def as_statement(self, operator, *args, **kwargs):
         self.use_template = 'stmt_template'
+
+        if not hasattr(self, 'stmt_template'):
+            self.stmt_template = self.sql_template + " %(op)s %%s"
+
         self.sql_operator = operator
-        self.args = args
+
+        self.args.extend(args)
         self.extra = kwargs
         return self
 
     def as_aggregate(self, *args, **kwargs):
-        self.args = args
+        self.args.extend(args)
         self.extra = kwargs
-        self.sql_function = None
+        self.sql_operator = None
         return self

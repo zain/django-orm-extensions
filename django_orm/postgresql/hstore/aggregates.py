@@ -1,40 +1,41 @@
 # -*- coding: utf-8 -*-
 
-from django_orm.utils.aggregates import AggregateNode
+from django_orm.utils.statements import Statement
 
-class HstoreSlice(AggregateNode):
+
+class HstoreSlice(Statement):
     """
     Obtain dictionary with only selected keys.
 
     Usage example::
         
         queryset = SomeModel.objects\
-            .inline_annotate(sliced=HstoreSlice("data", ['v']))
+            .inline_annotate(sliced=HstoreSlice("data").as_aggregate(['v']))
     """
 
     sql_template = '%(function)s(%(field)s, %%s)'
     sql_function = 'slice'
 
 
-class HstorePeek(AggregateNode):
+class HstorePeek(Statement):
     """
     Obtain values from hstore field.
     Usage example::
         
         queryset = SomeModel.objects\
-            .inline_annotate(peeked=HstorePeek("data", "v"))
+            .inline_annotate(peeked=HstorePeek("data").as_aggregate("v"))
     """
 
     sql_template = '%(field)s -> %%s'
 
 
-class HstoreKeys(AggregateNode):
+class HstoreKeys(Statement):
     """
     Obtain keys from hstore fields.
     Usage::
         
         queryset = SomeModel.objects\
-            .inline_annotate(keys=HstoreKeys("somefield"))
+            .inline_annotate(keys=HstoreKeys("somefield").as_aggregate())
     """
 
     sql_function = 'akeys'
