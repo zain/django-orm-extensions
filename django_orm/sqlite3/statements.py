@@ -2,7 +2,7 @@
 
 # NOTE: this module is pending to refactor.
 
-from django_orm.utils.statemetns import BaseTree as CommonBaseTree
+from django_orm.utils.statements import BaseTree as CommonBaseTree
 from django_orm.sqlite3.extra_functions import ensure_sqlite_function
 
 

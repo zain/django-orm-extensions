@@ -20,7 +20,7 @@ class UnaccentLikeTest(TestCase):
         self.assertEqual(qs.count(), 1)
 
 
-from django_orm.sqlite3.lookups import Unaccent
+from django_orm.sqlite3.statements import Unaccent
 
 class UnaccentComplexTest(TestCase):
     def setUp(self):

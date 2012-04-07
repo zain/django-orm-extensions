@@ -12,7 +12,7 @@ except ImportError:
     from django.db.models.query_utils import QueryWrapper # django >= 1.4
 
 
-from django_orm.query_utils import select_query, update_query
+from django_orm.utils.query_utils import select_query, update_query
 
 class HStoreWhereNode(WhereNode):
     def make_atom(self, child, qn, connection):
