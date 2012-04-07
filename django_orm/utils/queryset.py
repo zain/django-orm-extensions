@@ -2,6 +2,7 @@
 
 from django.utils.datastructures import SortedDict
 from django.db.models.sql.where import ExtraWhere
+from django_orm.utils.statements import AND, OR
 
 class StatementMixIn(object):
     def _setup_joins_for_fields(self, parts, node, query):
@@ -43,13 +44,12 @@ class StatementMixIn(object):
         node.field = (lookup_model._meta.db_table, lookup_field.attname)
 
     def inline_annotate(self, **kwargs):
-        # TODO: add order_by param.
         extra_select, params = SortedDict(), []
         clone = self._clone()
 
         for alias, node in kwargs.iteritems():
-            self._setup_joins_for_fields(node.field_parts, node, clone.query)
-            _sql, _params = node.as_sql(self.quote_name, None)
+            #self._setup_joins_for_fields(node.field_parts, node, clone.query)
+            _sql, _params = node.as_sql(self.quote_name, self)
 
             extra_select[alias] = _sql
             params.extend(_params)
@@ -59,10 +59,12 @@ class StatementMixIn(object):
 
     def where(self, *args):
         clone = self._clone()
-        for statement in args:
-            _sql, _params = statement.as_sql(self.quote_name, clone)
-            if hasattr(_sql, 'to_str'):
-                _sql = _sql.to_str()
-            clone.query.where.add(ExtraWhere([_sql], _params), "AND")
+        statement = AND(*args)
+
+        _sql, _params = statement.as_sql(self.quote_name, clone)
+        if hasattr(_sql, 'to_str'):
+            _sql = _sql.to_str()
+
+        clone.query.where.add(ExtraWhere([_sql], _params), "AND")
         return clone
 
