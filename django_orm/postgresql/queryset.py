@@ -4,7 +4,7 @@ from django.db.models.sql.constants import SINGLE
 from django.utils.datastructures import SortedDict
 from django_orm.postgresql.hstore.query import select_query, update_query
 from django_orm.cache.queryset import CachedQuerySet
-from django_orm.queryset import AggragateMixIn
+from django_orm.utils.queryset import AggragateMixIn
 
 class UnaccentQuerysetMixin(object):
     def unaccent(self, **kwargs):

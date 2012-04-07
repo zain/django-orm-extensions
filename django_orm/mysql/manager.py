@@ -3,7 +3,7 @@
 from django.db import models
 from django_orm.mysql.queryset import MyQuerySet
 from django_orm.cache.manager import CacheManagerMixIn
-from django_orm.manager import ManagerMixIn
+from django_orm.utils.manager import ManagerMixIn
 
 
 class Manager(ManagerMixIn, CacheManagerMixIn, models.Manager):
