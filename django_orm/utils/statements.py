@@ -35,7 +35,57 @@ class CommonBaseTree(tree.Node):
         obj = type(self)()
         obj.add(self, self.AND)
         obj.negate()
-        return obj 
+        return obj
+
+
+class RawSQL(object):
+    def __init__(self, items, connector):
+        self.items = items
+        self.connector = connector
+
+    def __str__(self):
+        connector = u" %s " % (self.connector)
+        return connector.join(self.items)
+
+    def to_str(self, closure=False):
+        if closure:
+            return u"(%s)" % (self)
+        return unicode(self)
+
+
+class OperatorTree(CommonBaseTree):
+    def as_sql(self, qn, connection):
+        items = []
+        params = []
+
+        for child in self.children:
+            _sql, _params = child.as_sql(qn, connection)
+
+            if isinstance(_sql, RawSQL):
+                _sql = _sql.to_str(True)
+            
+            items.extend([_sql])
+            params.extend(_params)
+
+        sql_obj = RawSQL(items, self._connector)
+        return sql_obj, params
+
+
+class AND(OperatorTree):
+    _connector = u"AND"
+
+
+class OR(OperatorTree):
+    _connector = u"OR"
+
+
+class RawStatement(object):
+    def __init__(self, sqlstatement, *args):
+        self.statement = sqlstatement
+        self.params = args
+
+    def as_sql(self, qn, connection):
+        return self.statement, self.params
 
 
 class BaseTree(CommonBaseTree):
