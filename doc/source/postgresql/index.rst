@@ -11,7 +11,6 @@ Table of Contents:
 
    hstore.rst
    server-cursors.rst
-   aggregates.rst
    fts.rst
 
 .. fields/index.rst

@@ -3,12 +3,6 @@ Own statements of indixes for a model
 
 It allows a simple way to add more additional indices to a particular model.
 
-Supported backends: 
-
-* ``django_orm.backends.postgresql_psycopg2``
-* ``django_orm.backends.mysql``
-* ``django_orm.backends.sqlite3``
-
 How it works:
 ^^^^^^^^^^^^^
 

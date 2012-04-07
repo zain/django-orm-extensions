@@ -14,11 +14,10 @@ I certainly do not want to take all the credit, because not all the work i have 
 a single integrated package with a stable api and covers the most popular databases: postgresql, mysql and sqlite3.
 
 
-Summary of characteristics (current and future)
------------------------------------------------
+Summary of characteristics
+--------------------------
 
-Supported backends:
-^^^^^^^^^^^^^^^^^^^
+**Supported backends:**
 
 * PostgreSQL 9.x
 * MySQL 5.1+
@@ -27,16 +26,15 @@ Supported backends:
 In versions before 3.x, it was necessary to have a specific subclass of database backend. Currently all works with the standard 
 Django database backends.
 
-Generic features (All backends):
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Generic features (All backends):**
 
 * Simple ORM level cache.
-* New, more simple and powerfull annotations.
-* Advanced filters with custom sql statements.
+* New, more simple and powerfull annotations. (under development)
+* Advanced filters with custom sql statements. (under development)
 * Database connection hooks.
+* Additional indexes attached to model. (pending refactor)
 
-PostgreSQL specific features:
------------------------------
+**PostgreSQL specific features:**
 
 * Improved Hstore module.
 * Full Text Search integration.
@@ -45,17 +43,21 @@ PostgreSQL specific features:
 Documentation index:
 --------------------
 
-General documentation
-^^^^^^^^^^^^^^^^^^^^^
-
 .. toctree::
    :maxdepth: 1
 
    orm-cache.rst
+   orm-aggregates.rst
+   orm-indexes.rst
+   orm-statements.rst
+
+
+Vendor specific documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. toctree::
    :maxdepth: 1
 
-   mysql/index.rst
-   sqlite/index.rst
    postgresql/index.rst
+   mysql.rst
+   sqlite.rst
