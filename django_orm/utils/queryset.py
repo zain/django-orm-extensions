@@ -26,7 +26,21 @@ class StatementMixIn(object):
         for column_alias in join_list:
             query.promote_alias(column_alias, unconditional=True)
 
-        node.field = (parts[-2], parts[-1])
+        lookup_model = self.model
+        for counter, field_name in enumerate(parts):
+            try:
+                lookup_field = lookup_model._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                parts.pop()
+                break
+            
+            try:
+                lookup_model = lookup_field.rel.to
+            except AttributeError:
+                parts.pop()
+                break
+
+        node.field = (lookup_model._meta.db_table, lookup_field.attname)
 
     def inline_annotate(self, **kwargs):
         # TODO: add order_by param.
