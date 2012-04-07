@@ -1,5 +1,5 @@
 from django.db import models
-from django_orm.postgresql.hstore.query import HStoreQuerySet
+from django_orm.postgresql.hstore.queryset import HStoreQuerySet
 from django_orm.postgresql.manager import Manager
 
 class HStoreManager(Manager):
