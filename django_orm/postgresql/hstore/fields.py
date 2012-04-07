@@ -56,6 +56,7 @@ class DictionaryField(HStoreField):
     def _value_to_python(self, value):
         return value
 
+
 class ReferencesField(HStoreField):
     description = _("A python dictionary of references to model instances in an hstore field.")
 

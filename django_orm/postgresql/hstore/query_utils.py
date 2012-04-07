@@ -15,7 +15,8 @@ def select_query(method):
 def update_query(method):
     def updater(self, *args, **params):
         self._for_write = True
-        query = method(self, self.query.clone(UpdateQuery), *args, **params)
+        temporal_update_query = self.query.clone(UpdateQuery)
+        query = method(self, temporal_update_query, *args, **params)
 
         forced_managed = False
         if not transaction.is_managed(using=self.db):

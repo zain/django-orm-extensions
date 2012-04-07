@@ -1,62 +1,12 @@
-from django import VERSION
-from django.db import transaction
-from django.db.models.query import QuerySet
+# -*- coding: utf-8 -*-
+
 from django.db.models.sql.constants import SINGLE
-from django.db.models.sql.datastructures import EmptyResultSet
-from django.db.models.sql.query import Query
-from django.db.models.sql.subqueries import UpdateQuery
-from django.db.models.sql.where import EmptyShortCircuit, WhereNode
-try:
-    from django.db.models.sql.where import QueryWrapper # django <= 1.3
-except ImportError:
-    from django.db.models.query_utils import QueryWrapper # django >= 1.4
-
-
-from django_orm.utils.query_utils import select_query, update_query
-
-class HStoreWhereNode(WhereNode):
-    def make_atom(self, child, qn, connection):
-        lvalue, lookup_type, value_annot, param = child
-        kwargs = {'connection': connection} if VERSION[:2] >= (1, 3) else {}
-        if lvalue and lvalue.field and hasattr(lvalue.field, 'db_type') and lvalue.field.db_type(**kwargs) == 'hstore':
-            try:
-                lvalue, params = lvalue.process(lookup_type, param, connection)
-            except EmptyShortCircuit:
-                raise EmptyResultSet
-            field = self.sql_for_columns(lvalue, qn, connection)
-            if lookup_type == 'exact':
-                if isinstance(param, dict):
-                    return ('%s = %%s' % field, [param])
-                else:
-                    raise ValueError('invalid value')
-            elif lookup_type == 'contains':
-                if isinstance(param, dict):
-                    return ('%s @> %%s' % field, [param])
-                elif isinstance(param, (list, tuple)):
-                    if param:
-                        return ('%s ?& %%s' % field, [param])
-                    else:
-                        raise ValueError('invalid value')
-                elif isinstance(param, basestring):
-                    return ('%s ? %%s' % field, [param])
-                else:
-                    raise ValueError('invalid value')
-            else:
-                raise TypeError('invalid lookup type')
-        return super(HStoreWhereNode, self).make_atom(child, qn, connection)
-
-
-class HStoreQuery(Query):
-    def __init__(self, model):
-        super(HStoreQuery, self).__init__(model, HStoreWhereNode)
+from django.db.models.query_utils import QueryWrapper
 
 from django_orm.cache.queryset import CachedQuerySet
+from django_orm.postgresql.hstore.query_utils import select_query, update_query
 
 class HStoreQuerySet(CachedQuerySet):
-    def __init__(self, model=None, query=None, using=None):
-        query = query or HStoreQuery(model)
-        super(HStoreQuerySet, self).__init__(model=model, query=query, using=using)
-
     @select_query
     def hkeys(self, query, attr):
         """
@@ -108,3 +58,25 @@ class HStoreQuerySet(CachedQuerySet):
         field, model, direct, m2m = self.model._meta.get_field_by_name(attr)
         query.add_update_fields([(field, None, value)])
         return query
+
+
+#            if lookup_type == 'exact':
+#                if isinstance(param, dict):
+#                    return ('%s = %%s' % field, [param])
+#                else:
+#                    raise ValueError('invalid value')
+#            elif lookup_type == 'contains':
+#                if isinstance(param, dict):
+#                    return ('%s @> %%s' % field, [param])
+#                elif isinstance(param, (list, tuple)):
+#                    if param:
+#                        return ('%s ?& %%s' % field, [param])
+#                    else:
+#                        raise ValueError('invalid value')
+#                elif isinstance(param, basestring):
+#                    return ('%s ? %%s' % field, [param])
+#                else:
+#                    raise ValueError('invalid value')
+#            else:
+#                raise TypeError('invalid lookup type')
+#        return super(HStoreWhereNode, self).make_atom(child, qn, connection)

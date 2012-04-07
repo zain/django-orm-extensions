@@ -36,30 +36,38 @@ class CommonBaseTree(tree.Node):
         obj.add(self, self.AND)
         obj.negate()
         return obj
+    
+    def set_query(self, query):
+        self.query = query
+        return self
 
 
 class RawSQL(object):
-    def __init__(self, items, connector):
+    def __init__(self, items, connector, query=None):
         self.items = items
         self.connector = connector
+        self.query = query
 
     def __str__(self):
-        connector = u" %s " % (self.connector)
+        connector = " %s " % (self.connector)
         return connector.join(self.items)
 
     def to_str(self, closure=False):
         if closure:
-            return u"(%s)" % (self)
+            return u"(%s)" % unicode(self)
         return unicode(self)
 
 
 class OperatorTree(CommonBaseTree):
-    def as_sql(self, qn, connection):
+    def as_sql(self, qn, query=None):
+        if query is None:
+            query = self.query
+
         items = []
         params = []
 
         for child in self.children:
-            _sql, _params = child.as_sql(qn, connection)
+            _sql, _params = child.as_sql(qn, query)
 
             if isinstance(_sql, RawSQL):
                 _sql = _sql.to_str(True)
@@ -67,16 +75,16 @@ class OperatorTree(CommonBaseTree):
             items.extend([_sql])
             params.extend(_params)
 
-        sql_obj = RawSQL(items, self._connector)
+        sql_obj = RawSQL(items, self._connector, query)
         return sql_obj, params
 
 
 class AND(OperatorTree):
-    _connector = u"AND"
+    _connector = "AND"
 
 
 class OR(OperatorTree):
-    _connector = u"OR"
+    _connector = "OR"
 
 
 class RawStatement(object):
