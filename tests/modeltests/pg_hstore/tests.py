@@ -160,6 +160,9 @@ class TestDictionaryField(TestCase):
         queryset = DataBag.objects\
             .where(HstoreSlice("data", ['v']).as_statement("=", {'v': '1'}))
 
+        #queryset = DataBag.objects\
+        #    .where(HstoreSlice(field="data", op="=", args=[['v'], {'v':'1'}])
+
         self.assertEqual(len(queryset), 1)
 
     def test_hupdate(self):
