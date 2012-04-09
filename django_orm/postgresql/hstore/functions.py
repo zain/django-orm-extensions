@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from django_orm.utils.statements import Statement
+from django_orm.core.sql.functions import SqlFunction
 
 
-class HstoreSlice(Statement):
+class HstoreSlice(SqlFunction):
     """
     Obtain dictionary with only selected keys.
 
@@ -17,7 +17,7 @@ class HstoreSlice(Statement):
     sql_function = 'slice'
 
 
-class HstorePeek(Statement):
+class HstorePeek(SqlFunction):
     """
     Obtain values from hstore field.
     Usage example::
@@ -29,7 +29,7 @@ class HstorePeek(Statement):
     sql_template = '%(field)s -> %%s'
 
 
-class HstoreKeys(Statement):
+class HstoreKeys(SqlFunction):
     """
     Obtain keys from hstore fields.
     Usage::

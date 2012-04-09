@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-class AggregateNode(object):
+from .base import SqlNode
+from .utils import _setup_joins_for_fields
+
+class SqlFunction(SqlNode):
     sql_template = '%(function)s(%(field)s)'
     sql_function = None
-    is_ordinal = False
-    is_computed = False
 
     def __init__(self, field, *args, **kwargs):
         self.field = field
@@ -19,10 +20,12 @@ class AggregateNode(object):
         """
         Return the aggregate/annotation rendered as sql.
         """
+
+        _setup_joins_for_fields(self.field_parts, self, queryset)
+
         params = {}
         if self.sql_function is not None:
             params['function'] = self.sql_function
-
         if isinstance(self.field, basestring):
             params['field'] = qn(self.field)
         elif isinstance(self.field, (tuple, list)):
