@@ -3,7 +3,7 @@
 from django.db.models.sql.constants import SINGLE
 from django.utils.datastructures import SortedDict
 from django_orm.cache.queryset import CachedQuerySet
-from django_orm.utils.queryset import StatementMixIn
+from django_orm.core.queryset import StatementMixIn
 
 class UnaccentQuerysetMixin(object):
     def unaccent(self, **kwargs):

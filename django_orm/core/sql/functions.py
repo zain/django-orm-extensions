@@ -16,7 +16,7 @@ class SqlFunction(SqlNode):
     def field_parts(self):
         return self.field.split("__")
     
-    def as_sql(self, qn, connection):
+    def as_sql(self, qn, queryset):
         """
         Return the aggregate/annotation rendered as sql.
         """

@@ -1,25 +1,23 @@
 # -*- coding: utf-8 -*-
 
 from django.test import TestCase
-
-from django_orm.utils.statements import RawStatement, Statement, AND, OR
+from django_orm.core.sql import RawExpression, SqlExpression, SqlFunction, AND, OR
 
 from .models import Person
 
-
-class StatementsTests(TestCase):
+class SqlExpressionsTests(TestCase):
     def test_raw_statements_0(self):
-        a = OR(
+        expresion_instance = OR(
             AND(
-                RawStatement("name = %s", "Andrei"), 
-                RawStatement("age = %s", 14),
+                RawExpression("name = %s", "Andrei"), 
+                RawExpression("age = %s", 14),
             ),
             AND(
-                RawStatement("name = %s", "Vesita"),
-                RawStatement("age = %s", 14),
+                RawExpression("name = %s", "Vesita"),
+                RawExpression("age = %s", 14),
             )
         )
-        sql, params = a.as_sql(None, None)
+        sql, params = expresion_instance.as_sql(None, None)
         self.assertEqual(sql.to_str(), "(name = %s AND age = %s) OR (name = %s AND age = %s)")
         self.assertEqual(params, ['Andrei', 14, 'Vesita', 14])
 
@@ -27,9 +25,11 @@ class StatementsTests(TestCase):
         Person.objects.all().delete()
 
     def test_string_sample_statement(self):
-        class BitLengthStatement(Statement):
+        class BitLength(SqlFunction):
             sql_function = "bit_length"
 
         obj = Person.objects.create(name="jose")
-        queryset = Person.objects.where(BitLengthStatement("name", "=", 32))
+        queryset = Person.objects.where(
+            SqlExpression(BitLength("name"), "=", 32)
+        )
         self.assertEqual(queryset.count(), 1)

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django.test import TestCase
-from django_orm.postgresql.aggregates import Unaccent
+from django_orm.postgresql.functions import Unaccent
+from django_orm.core.sql import SqlExpression
 
 from .models import TestModel
 from .models import Person
@@ -22,6 +23,7 @@ class UnaccentLikeTest(TestCase):
         qs = TestModel.manager.iunaccent(name=u"andrei")
         self.assertEqual(qs.count(), 1)
 
+
 class TestUnaccent(TestCase):
     def setUp(self):
         self.p1 = Person.objects.create(name='Andréi')
@@ -32,13 +34,15 @@ class TestUnaccent(TestCase):
         self.p2.delete()
     
     def test_annotate(self):
-        qs = Person.manager.inline_annotate(
-            name_unaccent = Unaccent("name").as_aggregate()
+        qs = Person.manager.annotate_functions(
+            name_unaccent = Unaccent("name")
         )
         qs = list(qs)
         self.assertEqual(qs[0].name_unaccent, 'Andrei')
         self.assertEqual(qs[1].name_unaccent, 'Pepa')
 
     def test_statement(self):
-        qs = Person.manager.where(Unaccent("name").as_statement("=", "Andrei"))
+        qs = Person.manager.where(
+            SqlExpression(Unaccent("name"), "=", "Andrei")
+        )
         self.assertEqual(qs.count(), 1)

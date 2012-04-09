@@ -3,7 +3,7 @@
 from django_orm.postgresql.fulltext.manager import SearchManagerMixIn
 from django_orm.postgresql.queryset import PgQuerySet
 from django_orm.cache.manager import CacheManagerMixIn
-from django_orm.utils.manager import ManagerMixIn
+from django_orm.core.manager import ManagerMixIn
 from django.db import models
 
 

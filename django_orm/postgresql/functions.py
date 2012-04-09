@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from django_orm.utils.statements import Statement
+from django_orm.core.sql import SqlFunction
 
-class Unaccent(Statement):
+class Unaccent(SqlFunction):
     sql_function = 'unaccent'

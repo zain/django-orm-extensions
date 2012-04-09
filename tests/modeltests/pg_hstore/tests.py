@@ -105,8 +105,8 @@ class TestDictionaryField(TestCase):
 
     def test_hkeys_annotation(self):
         alpha, beta = self._create_bags()
-        from django_orm.postgresql.hstore.aggregates import HstoreKeys
-        queryset = DataBag.objects.inline_annotate(keys=HstoreKeys("data").as_aggregate())
+        from django_orm.postgresql.hstore.functions import HstoreKeys
+        queryset = DataBag.objects.annotate_functions(keys=HstoreKeys("data"))
         self.assertEqual(queryset[0].keys, ['v', 'v2'])
         self.assertEqual(queryset[1].keys, ['v', 'v2'])
         
@@ -120,8 +120,8 @@ class TestDictionaryField(TestCase):
     def test_hpeek_annotation(self):
         alpha, beta = self._create_bags()
 
-        from django_orm.postgresql.hstore.aggregates import HstorePeek
-        queryset = DataBag.objects.inline_annotate(peeked=HstorePeek("data").as_aggregate("v"))
+        from django_orm.postgresql.hstore.functions import HstorePeek
+        queryset = DataBag.objects.annotate_functions(peeked=HstorePeek("data", "v"))
         self.assertEqual(queryset[0].peeked, "1")
         self.assertEqual(queryset[1].peeked, "2")
 
@@ -151,19 +151,11 @@ class TestDictionaryField(TestCase):
 
     def test_hslice_annotation(self):
         alpha, beta = self._create_bags()
-        from django_orm.postgresql.hstore.aggregates import HstoreSlice
-        queryset = DataBag.objects.inline_annotate(sliced=HstoreSlice("data").as_aggregate(['v']))
+        from django_orm.postgresql.hstore.functions import HstoreSlice
+        queryset = DataBag.objects.annotate_functions(sliced=HstoreSlice("data", ['v']))
 
         self.assertEqual(queryset.count(), 2)
         self.assertEqual(queryset[0].sliced, {'v': '1'})
-
-        queryset = DataBag.objects\
-            .where(HstoreSlice("data", ['v']).as_statement("=", {'v': '1'}))
-
-        #queryset = DataBag.objects\
-        #    .where(HstoreSlice(field="data", op="=", args=[['v'], {'v':'1'}])
-
-        self.assertEqual(len(queryset), 1)
 
     def test_hupdate(self):
         alpha, beta = self._create_bags()
@@ -255,19 +247,17 @@ class TestReferencesField(TestCase):
 
     def test_hkeys(self):
         alpha, beta, refs = self._create_bags()
-        self.assertEqual(RefsBag.objects.hkeys(id=alpha.id, attr='refs'), ['0', '1'])
+        self.assertEqual(RefsBag.objects.filter(id=alpha.id).hkeys(attr='refs'), ['0', '1'])
 
     def test_hpeek(self):
         alpha, beta, refs = self._create_bags()
-        self.assertEqual(RefsBag.objects.hpeek(id=alpha.id, attr='refs', key='0'), refs[0])
         self.assertEqual(RefsBag.objects.filter(id=alpha.id).hpeek(attr='refs', key='0'), refs[0])
-        self.assertEqual(RefsBag.objects.hpeek(id=alpha.id, attr='refs', key='invalid'), None)
+        self.assertEqual(RefsBag.objects.filter(id=alpha.id).hpeek(attr='refs', key='invalid'), None)
 
     def test_hslice(self):
         alpha, beta, refs = self._create_bags()
-        self.assertEqual(RefsBag.objects.hslice(id=alpha.id, attr='refs', keys=['0']), {'0': refs[0]})
         self.assertEqual(RefsBag.objects.filter(id=alpha.id).hslice(attr='refs', keys=['0']), {'0': refs[0]})
-        self.assertEqual(RefsBag.objects.hslice(id=alpha.id, attr='refs', keys=['invalid']), {})
+        self.assertEqual(RefsBag.objects.filter(id=alpha.id).hslice(attr='refs', keys=['invalid']), {})
 
     #def test_empty_querying(self):
     #    bag = RefsBag.objects.create(name='bag')

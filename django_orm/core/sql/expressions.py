@@ -9,16 +9,18 @@ from .utils import _setup_joins_for_fields
 class SqlExpression(SqlNode):
     sql_template = "%(field)s %(operator)s %%s"
 
-    def __init__(self, field_or_func, operator, value, **kwargs)
+    def __init__(self, field_or_func, operator, value, **kwargs):
         self.operator = operator
         self.value = value
+        self.extra = kwargs
 
-        if isinstance(self.field_or_func, SqlNode):
-            self.field = self.field_or_func.field
-            self.sql_function = self.field_or_func
+        if isinstance(field_or_func, SqlNode):
+            self.field = field_or_func.field
+            self.sql_function = field_or_func
         else:
-            self.field = self.field_or_func
+            self.field = field_or_func
             self.sql_function = None
+
 
     @property
     def field_parts(self):
@@ -37,7 +39,7 @@ class SqlExpression(SqlNode):
         params, args = {}, []
 
         if self.operator is not None:
-            params['operator'] = self.sql_operator
+            params['operator'] = self.operator
             
         if self.sql_function is None:
             if isinstance(self.field, basestring):
