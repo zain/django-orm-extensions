@@ -1,6 +1,6 @@
-==========
-ByteaField
-==========
+==============================
+PostgreSQL bytea. (ByteaField)
+==============================
 
 It is a wrapper for an bytea type field of postgresql. **Note**: this field is only for
 store binary data, not allowed querys.
