@@ -5,28 +5,20 @@ from django.utils.datastructures import SortedDict
 from django_orm.cache.queryset import CachedQuerySet
 from django_orm.core.queryset import StatementMixIn
 
-class UnaccentQuerysetMixin(object):
-    def unaccent(self, **kwargs):
-        where, params = [], []
-        for field, search_term in kwargs.items():
-            where_sql = u"unaccent(%s) LIKE unaccent(%%s)" % field
-            where.append(where_sql)
-            params.append(self._prepare_search_term(search_term))
-        return self.extra(where=where, params=params)
-    
-    def iunaccent(self, **kwargs):
-        where, params = [], []
-        for field, search_term in kwargs.items():
-            where_sql = u"lower(unaccent(%s)) LIKE lower(unaccent(%%s))" % field
-            where.append(where_sql)
-            params.append(self._prepare_search_term(search_term))
-        return self.extra(where=where, params=params)
-
-    def _prepare_search_term(self, term):
-        return u"%%%s%%" % term
+#class UnaccentQuerysetMixin(object):
+#    def iunaccent(self, **kwargs):
+#        where, params = [], []
+#        for field, search_term in kwargs.items():
+#            where_sql = u"lower(unaccent(%s)) LIKE lower(unaccent(%%s))" % field
+#            where.append(where_sql)
+#            params.append(self._prepare_search_term(search_term))
+#        return self.extra(where=where, params=params)
+#
+#    def _prepare_search_term(self, term):
+#        return u"%%%s%%" % term
 
 
-class PgQuerySet(StatementMixIn, UnaccentQuerysetMixin, CachedQuerySet):
+class PgQuerySet(StatementMixIn, CachedQuerySet):
     """
     Redefinition of standard queryset (with cache)
     for postgresql backend.

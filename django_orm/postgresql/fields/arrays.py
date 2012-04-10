@@ -3,8 +3,6 @@
 from django.db import models
 from django.utils.encoding import force_unicode
 
-from django_orm.postgresql.constants import ARRAY_LOOKUPS
-
 
 class ArrayField(models.Field):
     __metaclass__ = models.SubfieldBase
@@ -27,27 +25,6 @@ class ArrayField(models.Field):
             return value._prepare()
 
         return self.get_prep_value(value)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        value = self.get_prep_lookup(lookup_type, value)
-        
-        if lookup_type == 'indexexact':
-            return value, False
-
-        is_list = False
-        if isinstance(value, (list, tuple)):
-            if len(value) == 1:
-                return value[0], False
-
-            is_list = True
-            if isinstance(value[0], basestring):
-                value = u"{%s}" % (",".join(['"%s"' % x for x in value]))
-            elif isinstance(value[0], (float, int, long)):
-                value = u"{%s}" % (",".join(map(str, value)))
-            else:
-                raise ValueError('invalid value')
-
-        return value, is_list
 
     def db_type(self, connection):
         return '%s[]' % self._array_type

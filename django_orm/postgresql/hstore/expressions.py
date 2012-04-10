@@ -2,7 +2,7 @@
 
 from django_orm.core.sql import SqlExpression
 
-class HstoreExpression(SqlExpression):
+class HstoreExpression(object):
     def __init__(self, field):
         self.field = field
 
