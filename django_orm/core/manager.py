@@ -9,12 +9,6 @@ class ManagerMixIn(object):
             model._orm_manager = self
         super(ManagerMixIn, self).contribute_to_class(model, name)
 
-    def unaccent(self, **kwargs):
-        return self.get_query_set().unaccent(**kwargs)
-
-    def iunaccent(self, **kwargs):
-        return self.get_query_set().iunaccent(**kwargs)
-
     def annotate_functions(self, **kwargs):
         return self.get_query_set().annotate_functions(**kwargs)
 
