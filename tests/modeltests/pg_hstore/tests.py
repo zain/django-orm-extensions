@@ -4,6 +4,9 @@ from django.db import connections
 from django.db.models.aggregates import Count
 from django.utils.unittest import TestCase
 
+from django_orm.postgresql.hstore.functions import HstoreKeys, HstoreSlice, HstorePeek
+from django_orm.postgresql.hstore.expressions import HstoreExpression
+
 from .models import DataBag, Ref, RefsBag
 
 class TestDictionaryField(TestCase):
@@ -105,7 +108,6 @@ class TestDictionaryField(TestCase):
 
     def test_hkeys_annotation(self):
         alpha, beta = self._create_bags()
-        from django_orm.postgresql.hstore.functions import HstoreKeys
         queryset = DataBag.objects.annotate_functions(keys=HstoreKeys("data"))
         self.assertEqual(queryset[0].keys, ['v', 'v2'])
         self.assertEqual(queryset[1].keys, ['v', 'v2'])
@@ -119,8 +121,6 @@ class TestDictionaryField(TestCase):
 
     def test_hpeek_annotation(self):
         alpha, beta = self._create_bags()
-
-        from django_orm.postgresql.hstore.functions import HstorePeek
         queryset = DataBag.objects.annotate_functions(peeked=HstorePeek("data", "v"))
         self.assertEqual(queryset[0].peeked, "1")
         self.assertEqual(queryset[1].peeked, "2")
@@ -151,7 +151,6 @@ class TestDictionaryField(TestCase):
 
     def test_hslice_annotation(self):
         alpha, beta = self._create_bags()
-        from django_orm.postgresql.hstore.functions import HstoreSlice
         queryset = DataBag.objects.annotate_functions(sliced=HstoreSlice("data", ['v']))
 
         self.assertEqual(queryset.count(), 2)
@@ -163,61 +162,76 @@ class TestDictionaryField(TestCase):
         DataBag.objects.filter(name='alpha').hupdate('data', {'v2': '10', 'v3': '20'})
         self.assertEqual(DataBag.objects.get(name='alpha').data, {'v': '1', 'v2': '10', 'v3': '20'})
 
-    #def test_key_value_subset_querying(self):
-    #    alpha, beta = self._create_bags()
-    #    for bag in (alpha, beta):
-    #        r = DataBag.objects.filter(data__contains={'v': bag.data['v']})
-    #        self.assertEqual(len(r), 1)
-    #        self.assertEqual(r[0], bag)
-    #        r = DataBag.objects.filter(data__contains={'v': bag.data['v'], 'v2': bag.data['v2']})
-    #        self.assertEqual(len(r), 1)
-    #        self.assertEqual(r[0], bag)
+    def test_key_value_subset_querying(self):
+        alpha, beta = self._create_bags()
 
-    #def test_multiple_key_subset_querying(self):
-    #    alpha, beta = self._create_bags()
-    #    for keys in (['v'], ['v', 'v2']):
-    #        self.assertEqual(DataBag.objects.filter(data__contains=keys).count(), 2)
-    #    for keys in (['v', 'nv'], ['n1', 'n2']):
-    #        self.assertEqual(DataBag.objects.filter(data__contains=keys).count(), 0)
+        for bag in (alpha, beta):
+            qs = DataBag.objects.where(
+                HstoreExpression("data").contains({'v': bag.data['v']})
+            )
 
-    #def test_single_key_querying(self):
-    #    alpha, beta = self._create_bags()
-    #    for key in ('v', 'v2'):
-    #        self.assertEqual(DataBag.objects.filter(data__contains=key).count(), 2)
-    #    for key in ('n1', 'n2'):
-    #        self.assertEqual(DataBag.objects.filter(data__contains=key).count(), 0)
+            self.assertEqual(len(qs), 1)
+            self.assertEqual(qs[0], bag)
 
-    #def test_nested_filtering(self):
-    #    self._create_bitfield_bags()
+            qs = DataBag.objects.where(
+                HstoreExpression("data").contains({'v': bag.data['v'], 'v2': bag.data['v2']})
+            )
+            self.assertEqual(len(qs), 1)
+            self.assertEqual(qs[0], bag)
 
-    #    # Test cumulative successive filters for both dictionaries and other fields
-    #    f = DataBag.objects.all()
-    #    self.assertEqual(10,f.count())
-    #    f = f.filter(data__contains={'b0':'1'})
-    #    self.assertEqual(5,f.count())
-    #    f = f.filter(data__contains={'b1':'1'})
-    #    self.assertEqual(2,f.count())
-    #    f = f.filter(name='bag3')
-    #    self.assertEqual(1,f.count())
+    def test_multiple_key_subset_querying(self):
+        alpha, beta = self._create_bags()
 
-    #def test_aggregates(self):
-    #    self._create_bitfield_bags()
+        for keys in (['v'], ['v', 'v2']):
+            qs = DataBag.objects.where(
+                HstoreExpression("data").contains(keys)
+            )
+            self.assertEqual(qs.count(), 2)
 
-    #    self.assertEqual(DataBag.objects.filter(data__contains={'b0':'1'}).aggregate(Count('id'))['id__count'], 5)
-    #    self.assertEqual(DataBag.objects.filter(data__contains={'b1':'1'}).aggregate(Count('id'))['id__count'], 4)
+        for keys in (['v', 'nv'], ['n1', 'n2']):
+            qs = DataBag.objects.where(
+                HstoreExpression("data").contains(keys)
+            )
+            self.assertEqual(qs.count(), 0)
 
-    #def test_empty_querying(self):
-    #    bag = DataBag.objects.create(name='bag')
-    #    self.assertTrue(DataBag.objects.get(data={}))
-    #    self.assertTrue(DataBag.objects.filter(data={}))
-    #    self.assertTrue(DataBag.objects.filter(data__contains={}))
+    def test_single_key_querying(self):
+        alpha, beta = self._create_bags()
+        for key in ('v', 'v2'):
+            qs = DataBag.objects.where(HstoreExpression("data").contains(key))
+            self.assertEqual(qs.count(), 2)
 
-    #def test_create_test_db(self):
-    #    db = connections['default']
-    #    db.creation.create_test_db(verbosity=2,autoclobber=True)
-    #    alpha, beta = self._create_bags()
-    #    self.assertEqual(DataBag.objects.get(name='alpha'), alpha)
-    #    self.assertEqual(DataBag.objects.filter(name='beta')[0], beta)
+        for key in ('n1', 'n2'):
+            qs = DataBag.objects.where(HstoreExpression("data").contains(key))
+            self.assertEqual(qs.count(), 0)
+
+    def test_nested_filtering(self):
+        self._create_bitfield_bags()
+
+        # Test cumulative successive filters for both dictionaries and other fields
+        qs = DataBag.objects.all()
+        self.assertEqual(10, qs.count())
+
+        qs = qs.where(HstoreExpression("data").contains({'b0':'1'}))
+        self.assertEqual(5, qs.count())
+
+        qs = qs.where(HstoreExpression("data").contains({'b1':'1'}))
+        self.assertEqual(2, qs.count())
+
+        qs = qs.filter(name='bag3')
+        self.assertEqual(1, qs.count())
+
+    def test_aggregates(self):
+        self._create_bitfield_bags()
+        res = DataBag.objects.where(HstoreExpression("data").contains({'b0':'1'}))\
+            .aggregate(Count('id'))
+
+        self.assertEqual(res['id__count'], 5)
+
+    def test_empty_querying(self):
+        bag = DataBag.objects.create(name='bag')
+        self.assertTrue(DataBag.objects.get(data={}))
+        self.assertTrue(DataBag.objects.filter(data={}))
+        self.assertTrue(DataBag.objects.where(HstoreExpression("data").contains({})))
 
 
 class TestReferencesField(TestCase):
@@ -259,33 +273,46 @@ class TestReferencesField(TestCase):
         self.assertEqual(RefsBag.objects.filter(id=alpha.id).hslice(attr='refs', keys=['0']), {'0': refs[0]})
         self.assertEqual(RefsBag.objects.filter(id=alpha.id).hslice(attr='refs', keys=['invalid']), {})
 
-    #def test_empty_querying(self):
-    #    bag = RefsBag.objects.create(name='bag')
-    #    self.assertTrue(RefsBag.objects.get(refs={}))
-    #    self.assertTrue(RefsBag.objects.filter(refs={}))
-    #    self.assertTrue(RefsBag.objects.filter(refs__contains={}))
-
+    def test_empty_querying(self):
+        bag = RefsBag.objects.create(name='bag')
+        self.assertTrue(RefsBag.objects.get(refs={}))
+        self.assertTrue(RefsBag.objects.filter(refs={}))
+    
+    # TODO: fix this test
     #def test_key_value_subset_querying(self):
     #    alpha, beta, refs = self._create_bags()
     #    for bag in (alpha, beta):
-    #        r = RefsBag.objects.filter(refs__contains={'0': bag.refs['0']})
-    #        self.assertEqual(len(r), 1)
-    #        self.assertEqual(r[0], bag)
-    #        r = RefsBag.objects.filter(refs__contains={'0': bag.refs['0'], '1': bag.refs['1']})
-    #        self.assertEqual(len(r), 1)
-    #        self.assertEqual(r[0], bag)
+    #        qs = RefsBag.objects.where(
+    #            HstoreExpression("refs").contains({'0': bag.refs['0']})
+    #        )
+    #        self.assertEqual(len(qs), 1)
+    #        self.assertEqual(qs[0], bag)
 
-    #def test_multiple_key_subset_querying(self):
-    #    alpha, beta, refs = self._create_bags()
-    #    for keys in (['0'], ['0', '1']):
-    #        self.assertEqual(RefsBag.objects.filter(refs__contains=keys).count(), 2)
-    #    for keys in (['0', 'nv'], ['n1', 'n2']):
-    #        self.assertEqual(RefsBag.objects.filter(refs__contains=keys).count(), 0)
+    #        qs = RefsBag.objects.where(
+    #            HstoreExpression("refs").contains({'0': bag.refs['0'], '1': bag.refs['1']})
+    #        )
 
-    #def test_single_key_querying(self):
-    #    alpha, beta, refs = self._create_bags()
-    #    for key in ('0', '1'):
-    #        self.assertEqual(RefsBag.objects.filter(refs__contains=key).count(), 2)
-    #    for key in ('n1', 'n2'):
-    #        self.assertEqual(RefsBag.objects.filter(refs__contains=key).count(), 0)
+    #        self.assertEqual(len(qs), 1)
+    #        self.assertEqual(qs[0], bag)
+
+    def test_multiple_key_subset_querying(self):
+        alpha, beta, refs = self._create_bags()
+
+        for keys in (['0'], ['0', '1']):
+            qs = RefsBag.objects.where(HstoreExpression("refs").contains(keys))
+            self.assertEqual(qs.count(), 2)
+
+        for keys in (['0', 'nv'], ['n1', 'n2']):
+            qs = RefsBag.objects.where(HstoreExpression("refs").contains(keys))
+            self.assertEqual(qs.count(), 0)
+
+    def test_single_key_querying(self):
+        alpha, beta, refs = self._create_bags()
+        for key in ('0', '1'):
+            qs = RefsBag.objects.where(HstoreExpression("refs").contains(key))
+            self.assertEqual(qs.count(), 2)
+
+        for key in ('n1', 'n2'):
+            qs = RefsBag.objects.where(HstoreExpression("refs").contains(key))
+            self.assertEqual(qs.count(), 0)
 
