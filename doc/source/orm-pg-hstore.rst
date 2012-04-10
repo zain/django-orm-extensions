@@ -1,3 +1,4 @@
+=================
 PostgreSQL HStore
 =================
 
@@ -79,19 +80,19 @@ You can issue indexed queries against hstore fields:
 
 .. code-block:: python
 
-    from django_orm.postgresql.hstore import HstoreStatement as HS
+    from django_orm.postgresql.hstore.expressions import HstoreExpression as HE
 
     # equivalence
     Something.objects.filter(data={'a': '1', 'b': '2'})
 
     # subset by key/value mapping
-    Something.objects.where(HS("data").contains({'a':'1'}))
+    Something.objects.where(HE("data").contains({'a':'1'}))
 
     # subset by list of keys
-    Something.objects.where(HS("data").contains(['a', 'b']))
+    Something.objects.where(HE("data").contains(['a', 'b']))
 
     # subset by single key
-    Something.objects.where(HS("data").contains("a"))
+    Something.objects.where(HE("data").contains("a"))
 
 
 You can also take advantage of some db-side functionality by using the manager:
@@ -115,29 +116,10 @@ we can also use annotations, and then we can filter for them.
 
 .. code-block:: python
 
-    from django_orm.postgresql.hstore.aggregates import HstoreSlice, HstorePeek, HstoreKeysç
+    from django_orm.postgresql.hstore.functions import HstoreSlice, HstorePeek, HstoreKeysç
 
-    queryset = SomeModel.objects\
-        .inline_annotate(sliced=HstoreSlice("hstorefield", ['v']))
-
-    queryset = SomeModel.objects\
-        .inline_annotate(peeked=HstorePeek("hstorefield", "v"))
-
-    queryset = SomeModel.objects\
-        .inline_annotate(keys=HstoreKeys("hstorefield"))
-
-
-One advanced query example:
-
-.. code-block:: python
-
-    from django_orm.utils.statements import Statement
-
-    # define custom statement for filter, subclassing ``Statement``.
-
-    class BitLengthStatement(Statement):
-        sql_function = "bit_length"
-
-    queryset = SomeModel.objects\
-        .inline_annotate(peeked=HstorePeek("hstorefield", "v"))\
-        .where(BitLengthStatement("peeked", "=", 32))
+    queryset = SomeModel.objects.annotate_functions(
+        sliced = HstoreSlice("hstorefield", ['v']),
+        peeked = HstorePeek("hstorefield", "v"),
+        keys = HstoreKeys("hstorefield"),
+    )

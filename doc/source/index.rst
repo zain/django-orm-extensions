@@ -49,16 +49,14 @@ Documentation index:
    orm-functions.rst
    orm-expressions.rst
    orm-cache.rst
-   orm-aggregates.rst
    orm-indexes.rst
 
 
-Vendor specific documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Postgresql specific documentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. toctree::
    :maxdepth: 1
 
-   postgresql/index.rst
-   mysql.rst
-   sqlite.rst
+   orm-pg-hstore.rst
+   orm-pg-fulltext.rst

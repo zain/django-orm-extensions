@@ -27,7 +27,7 @@ To use it, you will need to add a new field and modifying one or the other metho
 .. code-block:: python
     
     from django_orm.manager import FtsManager as SearchManager
-    from django_orm.postgresql.fts.fields import VectorField
+    from django_orm.postgresql.fulltext.fields import VectorField
     from django.db import models
 
     class Page(models.Model):
