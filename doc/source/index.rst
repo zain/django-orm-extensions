@@ -61,3 +61,5 @@ Postgresql specific documentation
    orm-pg-hstore.rst
    orm-pg-fulltext.rst
    orm-pg-server-cursors.rst
+   orm-pg-bytea-field.rst
+   orm-pg-array-field.rst
