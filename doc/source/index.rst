@@ -51,7 +51,6 @@ Documentation index:
    orm-cache.rst
    orm-aggregates.rst
    orm-indexes.rst
-   orm-statements.rst
 
 
 Vendor specific documentation
