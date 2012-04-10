@@ -29,8 +29,8 @@ Django database backends.
 **Generic features (All backends):**
 
 * Simple ORM level cache.
-* New, more simple and powerfull annotations. (under development)
-* Advanced filters with custom sql statements. (under development)
+* New, more simple and powerfull annotations functions. (under development)
+* Advanced filters with custom sql expressions. (under development)
 * Database connection hooks.
 * Additional indexes attached to model. (pending refactor)
 
@@ -45,7 +45,9 @@ Documentation index:
 
 .. toctree::
    :maxdepth: 1
-
+   
+   orm-functions.rst
+   orm-expressions.rst
    orm-cache.rst
    orm-aggregates.rst
    orm-indexes.rst
