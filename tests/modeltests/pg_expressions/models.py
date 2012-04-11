@@ -9,3 +9,7 @@ class Person(models.Model):
     objects = Manager()
 
 
+class Profile(models.Model):
+    person = models.ForeignKey("Person", related_name="profiles")
+    objects = Manager()
+
