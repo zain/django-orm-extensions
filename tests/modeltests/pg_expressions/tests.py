@@ -44,7 +44,5 @@ class SqlExpressionsTests(TestCase):
         queryset = Profile.objects.where(
             SqlExpression(BitLength("person__name"), "=", 32)
         )
-        print queryset.query
-
         self.assertEqual(queryset.count(), 1)
         
