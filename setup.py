@@ -6,10 +6,6 @@ not covered by the standard orm.
 """
 
 long_description = """
-Currently the only supported what was django-postgresql. 
-But I'm working for some features available for all supported backends (postgresql, sqlite,
-mysql), as orm connection-pool and low-level cache.
-
 If you want to know in detail what it offers for each database, check the documentation.
 
 * **Documentation**: http://readthedocs.org/docs/django-orm/en/latest/
@@ -18,48 +14,27 @@ If you want to know in detail what it offers for each database, check the docume
 
 
 setup(
-    name="django-orm",
-    version=':versiontools:django_orm:',
-    url='https://github.com/niwibe/django-orm',
-    license='BSD',
-    platforms=['OS Independent'],
+    name = "django-orm-extensions",
+    version = ':versiontools:django_orm:',
+    url = 'https://github.com/niwibe/django-orm-extensions',
+    license = 'BSD',
+    platforms = ['OS Independent'],
     description = description.strip(),
     long_description = long_description.strip(),
     author = 'Andrei Antoukh',
     author_email = 'niwi@niwi.be',
     maintainer = 'Andrei Antoukh',
     maintainer_email = 'niwi@niwi.be',
-    packages = [
-        'django_orm',
-        'django_orm.postgresql',
-        'django_orm.cache',
-        'django_orm.mysql',
-        'django_orm.fields',
-        'django_orm.sqlite3',
-        'django_orm.postgresql.fts',
-        'django_orm.postgresql.fields',
-        'django_orm.postgresql.hstore',
-        'django_orm.postgresql.geometric',
-        'django_orm.backends',
-        'django_orm.backends.postgresql_psycopg2',
-        'django_orm.backends.mysql',
-        'django_orm.backends.sqlite3',
-        'django_orm.gis',
-        'django_orm.gis.db',
-        'django_orm.gis.db.backends',
-        'django_orm.gis.db.backends.postgis',
-        'django_orm.templatetags',
-    ],
+    packages = find_packages(),
     include_package_data = True,
-    install_requires=[
-        'distribute',
+    install_requires = [
         'psycopg2>=2.4'
     ],
     setup_requires = [
-        'versiontools >= 1.8',
+        'versiontools >= 1.9',
     ],
     zip_safe = False,
-    classifiers=[
+    classifiers = [
         'Development Status :: 4 - Beta',
         'Framework :: Django',
         'Intended Audience :: Developers',
