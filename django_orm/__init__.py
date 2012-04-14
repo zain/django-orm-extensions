@@ -2,11 +2,6 @@
 
 __version__ = (3, 0, 0, 'beta', 1)
 
-POOLTYPE_PERSISTENT = 1
-POOLTYPE_QUEUE = 2
-
-__all__  = ['POOLTYPE_PERSISTENT', 'POOLTYPE_QUEUE']
-
 from .signals import pre_syncdb
 
 def patch_django_syncdb_command():
