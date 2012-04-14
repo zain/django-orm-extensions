@@ -37,4 +37,4 @@ BEGIN
         (cos(radians(origin[0])) * cos(radians(curr[0])) * cos(radians(curr[1]) - radians(origin[1]))) +
         (sin(radians(origin[0])) * sin(radians(curr[0]))));
     RETURN result;
-END; $$ LANGUAGE plpgsql;
+END; $$ LANGUAGE plpgsql IMMUTABLE;
