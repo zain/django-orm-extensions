@@ -6,10 +6,12 @@ from django.db.models.sql.datastructures import MultiJoin
 from .base import SqlNode
 from .utils import _setup_joins_for_fields
 
+# TODO: can negate sql expression.
+
 class SqlExpression(SqlNode):
     sql_template = "%(field)s %(operator)s %%s"
 
-    def __init__(self, field_or_func, operator, value, **kwargs):
+    def __init__(self, field_or_func, operator, value=None, **kwargs):
         self.operator = operator
         self.value = value
         self.extra = kwargs
@@ -54,9 +56,16 @@ class SqlExpression(SqlNode):
             args.extend(_args)
 
         params.update(self.extra)
-        args.extend([self.value])
 
-        return self.sql_template % params, args
+        if self.value:
+            args.extend([self.value])
+
+        template_result = self.sql_template % params
+
+        if self.negated:
+            return self.sql_negated_template % (template_result), args
+
+        return template_result, args
 
 
 class RawExpression(SqlExpression):
