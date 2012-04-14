@@ -6,6 +6,7 @@ from .utils import _setup_joins_for_fields
 class SqlFunction(SqlNode):
     sql_template = '%(function)s(%(field)s)'
     sql_function = None
+    args = []
 
     def __init__(self, field, *args, **kwargs):
         self.field = field
