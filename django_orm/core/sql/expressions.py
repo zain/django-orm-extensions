@@ -23,7 +23,6 @@ class SqlExpression(SqlNode):
             self.field = field_or_func
             self.sql_function = None
 
-
     @property
     def field_parts(self):
         return self.field.split("__")
@@ -56,8 +55,7 @@ class SqlExpression(SqlNode):
             args.extend(_args)
 
         params.update(self.extra)
-
-        if self.value:
+        if self.value is not None:
             args.extend([self.value])
 
         template_result = self.sql_template % params
