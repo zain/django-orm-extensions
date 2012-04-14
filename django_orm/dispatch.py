@@ -65,13 +65,16 @@ class ConnectionCreateHandler(object):
                 valid_handler(connection)
         
     def on_postgresql_connection_created(self, connection):
-        print "Postgresql:", connection
+        #print "Postgresql:", connection
+        pass
 
     def on_mysql_connection_created(self, connection):
-        print "MySQL:", connection
+        #print "MySQL:", connection
+        pass
 
     def on_sqlite_connection_created(self, connection):
-        print "Sqlite3:", connection
+        #print "Sqlite3:", connection
+        pass
 
     def add_single_execution_handler(self, function, vendor='all'):
         function._vendor = vendor
@@ -80,36 +83,3 @@ class ConnectionCreateHandler(object):
 
 on_connection_created = ConnectionCreateHandler()
 backend_signals.connection_created.connect(on_connection_created)
-
-
-#def load_types_for_app(app_path, connection):
-#    try:
-#        ct_mod = import_module(app_path + ".composite_types")
-#    except ImportError:
-#        return
-#
-#    if not hasattr(ct_mod, '__register__'):
-#        return
-#
-#    valid_types_class = set(ct_mod.__register__)
-#
-#    for klass_str in valid_types_class:
-#        klass = getattr(ct_mod, klass_str)
-#        tname, schema = klass.__name__.lower(), 'public'
-#            
-#        try:
-#            curs = connection.cursor()
-#            curs.execute(klass._create_sql_raw)
-#        except DatabaseError:
-#            print "Type %s already exists on database." % (tname)
-#
-#
-#def pre_syncdb_callback(**kwargs):
-#    from django.db import connection
-#    installed_apps = getattr(settings, 'INSTALLED_APPS')
-#    for app in installed_apps:
-#        load_types_for_app(app, connection)
-#
-#
-#from django_orm.signals import pre_syncdb
-#pre_syncdb.connect(pre_syncdb_callback)
