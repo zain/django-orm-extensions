@@ -3,6 +3,8 @@
 from .base import SqlNode
 from .utils import _setup_joins_for_fields
 
+# TODO: add function(function()) feature.
+
 class SqlFunction(SqlNode):
     sql_template = '%(function)s(%(field)s)'
     sql_function = None
