@@ -2,212 +2,21 @@
 
 from django.db import models
 from django.utils.encoding import force_unicode
-from django_orm.postgresql.constants import QUERY_TERMS
 
-"""
-Posible aggregate list:
-- area(object)          -> double
-- center(object)        -> point
-- diameter(circle)      -> double
-- height(box)           -> double
-- isclosed(path)        -> bool
-- isopen(path)          -> bool
-- length(object)        -> double
-- npoints(path, polygon)-> int
-- radius(circle)        -> double
-- width(box)            -> double
-
-A lot of agregates are used for querys.
-
-"""
-
-class PointField(models.Field):
+class GeometricField(models.Field):
     __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(PointField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
-
-    def db_type(self, connection):
-        return 'point'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class CircleField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(CircleField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
-
-    def db_type(self, connection):
-        return 'circle'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class LineField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(LineField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
-
-    def db_type(self, connection):
-        return 'line'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class LsegField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(LsegField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
-
-    def db_type(self, connection):
-        return 'lseg'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class BoxField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(BoxField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
-
-    def db_type(self, connection):
-        return 'box'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class PathField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('default', None)
-        super(PathField, self).__init__(*args, **kwargs)
-
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
     
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
+    def __init__(self, dbtype, *args, **kwargs):
+        self._dbtype = dbtype
 
-    def db_type(self, connection):
-        return 'path'
-
-    def get_db_prep_value(self, value, connection, prepared=False):
-        value = value if prepared else self.get_prep_value(value)
-        return value
-
-    def to_python(self, value):
-        return value
-
-
-class PolygonField(models.Field):
-    __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
         kwargs.setdefault('blank', True)
         kwargs.setdefault('null', True)
         kwargs.setdefault('default', None)
-        super(PolygonField, self).__init__(*args, **kwargs)
 
-    def get_prep_lookup(self, lookup_type, value):
-        if lookup_type in QUERY_TERMS:
-            return self.get_prep_value(value)
-        raise TypeError("Field has invalid lookup: %s" % lookup_type)
-
-    def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
-        return self.get_prep_lookup(lookup_type, value)
+        super(GeometricField, self).__init__(*args, **kwargs)
 
     def db_type(self, connection):
-        return 'box'
+        return self._dbtype.db_type(connection)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         value = value if prepared else self.get_prep_value(value)

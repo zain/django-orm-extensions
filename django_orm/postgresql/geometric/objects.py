@@ -5,57 +5,15 @@ from django.utils import simplejson as json
 from django.db import connection
 from psycopg2.extensions import adapt, register_adapter, AsIs, new_type, register_type
 
+from .adapt import ADAPT_MAPPER
+
 rx_circle_float = re.compile(r'<\(([\d\.\-]*),([\d\.\-]*)\),([\d\.\-]*)>')
 rx_line = re.compile(r'\[\(([\d\.\-]*),\s*([\w\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\+]*)\)\]')
 rx_point = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\)')
 rx_box = re.compile(r'\(([\d\.\-]*),\s*([\d\.\-]*)\),\s*\(([\d\.\-]*),\s*([\d\.\-]*)\)')
 rx_path_identify = re.compile(r'^((?:\(|\[))(.*)(?:\)|\])$')
 
-
-""" PYTHON->SQL ADAPTATION """
-
-def adapt_point(point):
-    return AsIs(u"point '(%s, %s)'" % (adapt(point.x), adapt(point.y)))
-
-def adapt_circle(c):
-    return AsIs(u"circle '<(%s,%s),%s>'" % \
-        (adapt(c.point.x), adapt(c.point.y), adapt(c.r)))
-
-def adapt_lseg(l):
-    return AsIs(u"'[(%s,%s), (%s,%s)]'::lseg" % (\
-        adapt(l.init_point.x),
-        adapt(l.init_point.y),
-        adapt(l.end_point.x),
-        adapt(l.end_point.y)
-    ))
-
-def adapt_box(box):
-    return AsIs("'(%s,%s),(%s,%s)'::box" % (
-        adapt(box.init_point.x),
-        adapt(box.init_point.y),
-        adapt(box.end_point.x),
-        adapt(box.end_point.y)
-    ))
-
-def adapt_path(path):
-    container = "'[%s]'::path"
-    if path.closed:
-        container = "'(%s)'::path"
-    
-    points = ["(%s,%s)" % (x, y) \
-        for x, y in path]
-    return AsIs(container % (",".join(points)))
-
-
-def adapt_polygon(path):
-    container = "'(%s)'::polygon"
-    
-    points = ["(%s,%s)" % (x, y) \
-        for x, y in path]
-
-    return AsIs(container % (",".join(points)))
-
-""" SQL->PYTHON ADAPTATION """
+""" SQL->PYTHON CAST """
 
 def cast_point(value, cur):
     if value is None:
@@ -64,7 +22,7 @@ def cast_point(value, cur):
     res = rx_point.search(value)
     if not res:
         raise ValueError("bad point representation: %r" % value)
-
+    
     return Point([int(x) if "." not in x else float(x) \
         for x in res.groups()])
 
@@ -139,16 +97,6 @@ def cast_polygon(value, cur):
     ) for x, y in rx_point.findall(points)], closed=is_closed)
 
 
-ADAPT_MAPPER = {
-    'Point': adapt_point,
-    'Circle': adapt_circle,
-    'Box': adapt_box,
-    'Path': adapt_path,
-    'Polygon': adapt_polygon,
-    'Lseg': adapt_lseg,
-}
-
-
 CAST_MAPPER = {
     'Point': cast_point,
     'Circle': cast_circle,
@@ -168,20 +116,24 @@ class GeometricMeta(type):
         super(GeometricMeta, cls).__init__(name, bases, attrs)
         cls._registed = False
 
-    def __call__(cls, *args, **kwargs):
-        instance = super(GeometricMeta, cls).__call__(*args, **kwargs)
+    def __call__(cls, *args):
+        if len(args) > 1:
+            return super(GeometricMeta, cls).__call__(tuple(args))
+        elif isinstance(args[0], (list, tuple)):
+            return super(GeometricMeta, cls).__call__(*args)
+        raise ValueError("Incorrect parameters")
+        
+        # old code: register on demand.
+        #if cls.type_name() not in ADAPT_MAPPER:
+        #    cls._registed = True
+        #    return instance
 
-        if cls.type_name() not in ADAPT_MAPPER:
-            cls._registed = True
-            return instance
-
-        cls.register_adapter()
-
-        GeometricMeta.__call__ = super(GeometricMeta, cls).__call__
+        #cls.register_adapter()
+        #GeometricMeta.__call__ = super(GeometricMeta, cls).__call__
         return instance
 
     def register_cast(cls, connection):
-        cast_function = ADAPT_MAPPER[cls.type_name()]
+        cast_function = CAST_MAPPER[cls.type_name()]
         cursor = connection.cursor()
         cursor.execute(cls.sql_for_oid())
         oid = cursor.description[0][1]
@@ -197,6 +149,9 @@ class GeometricMeta(type):
     def type_name(cls):
         return cls.__name__
 
+    def db_type(cls, connection):
+        return cls.type_name().lower()
+
     def sql_for_oid(cls):
         ntype = cls.type_name().lower()
         return "SELECT NULL::%s" % (ntype)
@@ -209,7 +164,6 @@ class Point(tuple):
     __metaclass__ = GeometricMeta
 
     def __init__(self, args):
-        print "!!!!!!!!!!!", args
         if len(args) == 2:
             super(Point, self).__init__(args)
         else: 
@@ -276,6 +230,7 @@ class Circle(tuple):
 
 class Lseg(tuple):
     __metaclass__ = GeometricMeta
+
     def __init__(self, args):
         if len(args) == 4:
             super(Lseg, self).__init__(args)
@@ -361,7 +316,9 @@ class Path(tuple):
 
 class Polygon(Path):
     __metaclass__ = GeometricMeta
+
     def __repr__(self):
         return "<Polygon(%s) closed=%s>" % (len(self), self.closed)
+
 
 __all__ = ['Polygon', 'Point', 'Box', 'Circle', 'Path', 'Lseg']
