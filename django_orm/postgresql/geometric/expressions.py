@@ -31,6 +31,12 @@ class GeoExpression(object):
     def does_not_extend_below(self, value):
         return SqlExpression(self.field, "|&>", value)
 
+    def does_not_extend_right(self, value):
+        return SqlExpression(self.field, "&<", value)
+
+    def does_not_extend_left(self, value):
+        return SqlExpression(self.field, "&>", value)
+
     def intersects_with(self, value):
         return SqlExpression(self.field, "?#", value)
 
@@ -40,6 +46,9 @@ class GeoExpression(object):
 
     def contains(self, value):
         return SqlExpression(self.field, "@>", value)
+
+    def contained_on(self, value):
+        return SqlExpression(self.field, "<@", value)
 
     def is_horizontal(self):
         return SimpleExpression(self.field, "?-")
@@ -58,3 +67,6 @@ class GeoExpression(object):
 
     def is_parallel_to(self, value):
         return SqlExpression(self.field, "?||", value)
+
+    def same_as(self, value):
+        return SqlExpression(self.field, "~=", value)

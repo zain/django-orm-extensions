@@ -23,8 +23,10 @@ class HStoreDictionary(dict):
 class HStoreDescriptor(models.fields.subclassing.Creator):
     def __set__(self, obj, value):
         value = self.field.to_python(value)
+
         if not isinstance(value, HStoreDictionary):
             value = self.field._attribute_class(value, self.field, obj)
+
         obj.__dict__[self.field.name] = value
 
 

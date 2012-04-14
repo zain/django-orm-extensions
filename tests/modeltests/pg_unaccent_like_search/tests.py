@@ -7,23 +7,6 @@ from django_orm.core.sql import SqlExpression
 from .models import TestModel
 from .models import Person
 
-class UnaccentLikeTest(TestCase):
-    def setUp(self):
-        self.obj0 = TestModel.objects.create(name=u"Andréi", desc="Fòoo Bar")
-        self.obj1 = TestModel.objects.create(name=u"Pêpe", desc="Bär Foo")
-
-    def test_unaccent_method(self):
-        qs = TestModel.manager.unaccent(name=u"Andrei")
-        self.assertEqual(qs.count(), 1)
-
-        qs = TestModel.manager.unaccent(name=u"andrei")
-        self.assertEqual(qs.count(), 0)
-
-    def test_iunaccent_method(self):
-        qs = TestModel.manager.iunaccent(name=u"andrei")
-        self.assertEqual(qs.count(), 1)
-
-
 class TestUnaccent(TestCase):
     def setUp(self):
         self.p1 = Person.objects.create(name='Andréi')
