@@ -1,5 +1,5 @@
-django-orm
-==========
+django-orm-extensions
+=====================
 
 Advanced improvement of django orm with third-party modules in one complete orm subclass.
 

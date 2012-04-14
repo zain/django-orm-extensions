@@ -45,8 +45,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'django-orm'
-copyright = u'2011, Andrei Antoukh'
+project = u'django-orm-extensions'
+copyright = u'2011-2012, Andrei Antoukh'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
