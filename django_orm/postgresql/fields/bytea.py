@@ -4,6 +4,7 @@ import types
 
 from django.db import models
 from psycopg2 import Binary
+from psycopg2.extensions import lobject as lobject_class
 
 psycopg_bynary_class = Binary("").__class__
 
@@ -49,3 +50,74 @@ class ByteaField(models.Field):
             return str(value)
         
         return value
+
+
+class LargeObjectProxy(object):
+    def __init__(self, oid=0, field=None, instance=None, **params):
+        self.oid = oid
+        self.field = field
+        self.instance = instance
+        self.params = params
+        self._obj = None
+
+    def __getattr__(self, name):
+        if self._obj is None:
+            raise Exception("File is not opened")
+        return getattr(self._obj, name)
+    
+    def open(self, mode="rwb", new_file=None, using="default"):
+        connection = connections[using]
+        self._obj = connection.connection.lobject(self.oid, mode, 0, new_file)
+        return self
+        
+
+class LargeObjectDescriptor(models.fields.subclassing.Creator):
+    def __set__(self, instance, value):
+        value = self.field.to_python(value)
+        if value is not None:
+            if not isinstance(value, LargeObjectProxy):
+                value = self.field._attribute_class(value, self.field, instance)
+        instance.__dict__[self.field.name] = value
+
+
+class LargeObjectField(models.IntegerField):
+    _attribute_class = LargeObjectProxy
+    _descriptor_class = LargeObjectDescriptor
+
+    def db_type(self, connection):
+        return 'oid'
+    
+    def contribute_to_class(self, cls, name):
+        super(LargeObjectField, self).contribute_to_class(cls, name)
+        setattr(cls, self.name, self._descriptor_class(self))
+
+    def _value_to_python(self, value):
+        return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if not prepared:
+            value = self.get_prep_value(value)
+
+        if isinstance(value, LargeObjectField):
+            if value.oid > 0:
+                return value
+
+            raise ValueError("Value must be a great that 0")
+
+        elif isinstance(value, types.NoneType):
+            return None
+
+        raise ValueError("Invalid value")
+
+    def get_prep_value(self, value):
+        return value
+
+    def to_python(self, value):
+        if isinstance(value, LargeObjectProxy):
+            return value
+        elif isinstance(value, (int, long)):
+            return LargeObjectProxy(value, self, self.model)
+        elif isinstance(value, types.NoneType):
+            return None
+        else:
+            raise ValueError("Invalid value")

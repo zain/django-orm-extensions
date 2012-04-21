@@ -2,9 +2,10 @@
 
 from django.test import TestCase
 
-from django_orm.postgresql.fields.bytea import ByteaField
+from django_orm.postgresql.fields.bytea import ByteaField, LargeObjectProxy
 from django_orm.core.sql import SqlExpression
-from .models import ByteaModel
+
+from .models import ByteaModel, LargeObjectModel
 
 import hashlib
 import os.path
@@ -36,3 +37,15 @@ class ByteaFieldTest(TestCase):
         obj = ByteaModel.objects.create(data=None)
         obj = ByteaModel.objects.get(pk=obj.id)
         self.assertEqual(obj.data, None)
+
+
+class LargeObjectTest(TestCase):
+    def setUp(self):
+        LargeObjectModel.objects.all().delete()
+
+    def test_create_void(self):
+        LargeObjectModel.objects.create(lobj=None)
+
+    def test_create_invalid(self):
+        with self.assertRaises(ValueError):
+            LargeObjectModel.objects.create(lobj=LargeObjectProxy())
