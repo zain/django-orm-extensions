@@ -39,6 +39,7 @@ Django database backends.
 * Improved Hstore module.
 * Full Text Search integration.
 * Server side cursors.
+* Large Objects
 
 Documentation index:
 --------------------
@@ -63,3 +64,4 @@ Postgresql specific documentation
    orm-pg-server-cursors.rst
    orm-pg-bytea-field.rst
    orm-pg-array-field.rst
+   orm-pg-large-objects.rst
