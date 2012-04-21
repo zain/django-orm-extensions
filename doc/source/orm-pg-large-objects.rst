@@ -46,7 +46,7 @@ As we are working with files, the behavior is identical to them.
 
 To read the object, is just as much as we read of a regular file.
 
-.. code-block::
+.. code-block:: python
     
     instance = LargeObjectModel.objects.get(pk=1)
     
