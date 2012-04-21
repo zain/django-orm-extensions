@@ -12,7 +12,6 @@ If you want to know in detail what it offers for each database, check the docume
 * **Project page**: http://www.niwi.be/post/project-django-orm/
 """
 
-
 setup(
     name = "django-orm-extensions",
     version = ':versiontools:version:',
@@ -26,7 +25,7 @@ setup(
     maintainer = 'Andrei Antoukh',
     maintainer_email = 'niwi@niwi.be',
     packages = find_packages(),
-    include_package_data = True,
+    include_package_data = False,
     install_requires = [
         'psycopg2>=2.4'
     ],
