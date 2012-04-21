@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import types
+
 from django.db import models
 from psycopg2 import Binary
+
+psycopg_bynary_class = Binary("").__class__
 
 class ByteaField(models.Field):
     __metaclass__ = models.SubfieldBase
@@ -27,12 +31,11 @@ class ByteaField(models.Field):
             value = Binary(value.encode('utf-8'))
         elif isinstance(value, str):
             value = Binary(value)
-        elif isinstance(value, Binary):
+        elif isinstance(value, (psycopg_bynary_class, types.NoneType)):
             value = value
         else:
             raise ValueError("only str, unicode and bytea permited")
         return value
-
 
     def get_prep_value(self, value):
         return value
