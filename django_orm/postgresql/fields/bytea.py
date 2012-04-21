@@ -2,7 +2,7 @@
 
 import types
 
-from django.db import models
+from django.db import models, connections
 from psycopg2 import Binary
 from psycopg2.extensions import lobject as lobject_class
 
@@ -61,13 +61,18 @@ class LargeObjectProxy(object):
         self._obj = None
 
     def __getattr__(self, name):
+        # TODO: need improvements
         if self._obj is None:
             raise Exception("File is not opened")
-        return getattr(self._obj, name)
+        try:
+            return super(LargeObjectProxy, self).__getattr__(name)
+        except AttributeError:
+            return getattr(self._obj, name)
     
     def open(self, mode="rwb", new_file=None, using="default"):
         connection = connections[using]
         self._obj = connection.connection.lobject(self.oid, mode, 0, new_file)
+        self.oid = self._obj.oid
         return self
         
 
@@ -98,11 +103,11 @@ class LargeObjectField(models.IntegerField):
         if not prepared:
             value = self.get_prep_value(value)
 
-        if isinstance(value, LargeObjectField):
+        if isinstance(value, LargeObjectProxy):
             if value.oid > 0:
-                return value
+                return value.oid
 
-            raise ValueError("Value must be a great that 0")
+            raise ValueError("Oid must be a great that 0")
 
         elif isinstance(value, types.NoneType):
             return None
@@ -119,5 +124,5 @@ class LargeObjectField(models.IntegerField):
             return LargeObjectProxy(value, self, self.model)
         elif isinstance(value, types.NoneType):
             return None
-        else:
-            raise ValueError("Invalid value")
+        
+        raise ValueError("Invalid value")

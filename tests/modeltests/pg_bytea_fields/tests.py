@@ -49,3 +49,25 @@ class LargeObjectTest(TestCase):
     def test_create_invalid(self):
         with self.assertRaises(ValueError):
             LargeObjectModel.objects.create(lobj=LargeObjectProxy())
+
+    def test_write_simple_object(self):
+        lobj = LargeObjectProxy()
+        lobj.open()
+
+        path = os.path.join(os.path.dirname(__file__), "test.jpg")
+
+        with io.open(path, "rb") as f:
+            lobj.write(f.read())
+            lobj.close()
+
+        instance = LargeObjectModel.objects.create(lobj=lobj)
+        instance = LargeObjectModel.objects.get(pk=instance.pk)
+
+        with io.open(path, "rb") as f:
+            original_data = f.read()
+
+            instance.lobj.open()
+            database_data = instance.lobj.read()
+
+            self.assertEqual(original_data, database_data)
+
