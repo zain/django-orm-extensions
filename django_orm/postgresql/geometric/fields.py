@@ -24,3 +24,15 @@ class GeometricField(models.Field):
 
     def to_python(self, value):
         return value
+
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([
+        (
+            [GeometricField], # class
+            [],               # positional params
+            {'dbtype': ["dbtype", {"default", "point"}]}, # kwargs
+        )
+    ], ['django_orm\.postgresql\.geometric\.fields\.GeometricField'])
+except ImportError:
+    pass
