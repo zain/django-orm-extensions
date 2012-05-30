@@ -52,9 +52,9 @@ try:
     from south.modelsinspector import add_introspection_rules
     add_introspection_rules([
         (
-            [ArrayField], # class
+            [arrays.ArrayField], # class
             [],               # positional params
-            {'dbtype': ["dbtype", {"default", "int"}]}, # kwargs
+            {'dbtype': ["_array_type", {"default" : "int"}]}, # kwargs
         )
     ], ['django_orm\.postgresql\.fields\.arrays\.ArrayField'])
 except ImportError:
