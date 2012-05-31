@@ -27,11 +27,12 @@ class GeometricField(models.Field):
 
 try:
     from south.modelsinspector import add_introspection_rules
+    from .objects import Point
     add_introspection_rules([
         (
             [GeometricField], # class
             [],               # positional params
-            {'dbtype': ["dbtype", {"default", "point"}]}, # kwargs
+            {'dbtype': ["_dbtype", {"default": Point}]}, # kwargs
         )
     ], ['django_orm\.postgresql\.geometric\.fields\.GeometricField'])
 except ImportError:
