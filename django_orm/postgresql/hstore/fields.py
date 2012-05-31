@@ -80,6 +80,6 @@ class ReferencesField(HStoreField):
 
 try:
     from south.modelsinspector import add_introspection_rules
-    add_introspection_rules(rules=[], patterns=['django_hstore\.fields'])
+    add_introspection_rules(rules=[], patterns=['django_orm\.postgresql\.hstore\.fields\.DictionaryField'])
 except ImportError:
     pass

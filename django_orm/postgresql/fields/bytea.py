@@ -126,3 +126,11 @@ class LargeObjectField(models.IntegerField):
             return None
         
         raise ValueError("Invalid value")
+
+
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([], ['django_orm\.postgresql\.fields\.bytea\.ByteaField'])
+    add_introspection_rules([], ['django_orm\.postgresql\.fields\.bytea\.LargeObjectField'])
+except ImportError:
+    pass

@@ -47,3 +47,15 @@ class ArrayField(models.Field):
             if self._array_type in ('text') or "varchar" in self._array_type:
                 return map(force_unicode, value)
         return value
+
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([
+        (
+            [arrays.ArrayField], # class
+            [],               # positional params
+            {'dbtype': ["_array_type", {"default" : "int"}]}, # kwargs
+        )
+    ], ['django_orm\.postgresql\.fields\.arrays\.ArrayField'])
+except ImportError:
+    pass

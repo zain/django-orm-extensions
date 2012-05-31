@@ -17,10 +17,8 @@ class VectorField(models.Field):
     #def get_prep_lookup(self, lookup_type, value):
     #    if hasattr(value, 'prepare'):
     #        return value.prepare()
-
     #    if hasattr(value, '_prepare'):
     #        return value._prepare()
-
     #    raise TypeError("Field has invalid lookup: %s" % lookup_type)
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
@@ -28,3 +26,9 @@ class VectorField(models.Field):
 
     def get_prep_value(self, value):
         return value
+
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules(rules=[], patterns=['django_orm\.postgresql\.fulltext\.fields\.VectorField'])
+except ImportError:
+    pass
