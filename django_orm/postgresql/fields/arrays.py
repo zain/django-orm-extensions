@@ -52,7 +52,7 @@ try:
     from south.modelsinspector import add_introspection_rules
     add_introspection_rules([
         (
-            [arrays.ArrayField], # class
+            [ArrayField], # class
             [],               # positional params
             {'dbtype': ["_array_type", {"default" : "int"}]}, # kwargs
         )
