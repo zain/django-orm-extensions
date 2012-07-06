@@ -27,7 +27,6 @@ setup(
     packages = find_packages(),
     include_package_data = False,
     install_requires = [
-        'psycopg2>=2.4'
     ],
     setup_requires = [
         'versiontools >= 1.9',
